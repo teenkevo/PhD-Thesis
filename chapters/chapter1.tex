@@ -51,17 +51,17 @@ Crafting this thesis' problem statement is primarily driven by the following res
 Based on the above problem statement, a design of the following research questions is deemed appropriate to guide the direction of this thesis.
 \begin{itemize}
     \item 
-    \textbf{Research Question 1}: \textit{How can knowledge graphs be used to represent the semantic relationships between different building components and systems using domain-agnostic technologies for efficient utilization in downstream \ac{KRL} tasks?}\\
+    \textbf{Research Question 1 (RQ1)}: \textit{How can knowledge graphs be used to represent the semantic relationships between different building components and systems using domain-agnostic technologies for efficient utilization in downstream \ac{KRL} tasks?}\\
 
     This research question addresses an important data management problem in the highly fragmented and data-intensive building automation domain. The question is tackled by first analyzing the current literature for relevant theories, methods, and tools that have been developed to capture semantic relationships between different building components and systems with regard to automation and control. Specific focus is placed on the use of ontologies and \acp{SWT} to formulate \acp{BIM-KG} while investigating their fit within the boundaries \ac{KRL}.\\
     
     \item 
-    \textbf{Research Question 2}: \textit{How can \ac{KRL} be used to learn the relationships formulated in Research Question 1 for building automation?} \\
+    \textbf{Research Question 2 (RQ2)}: \textit{How can \ac{KRL} be used to learn the relationships formulated in Research Question 1 for building automation?} \\
 
-    This research question investigates effective ways to integrate and use linked building data (\acp{BIM-KG}) in the training and evaluation of \ac{KRL} algorithms, and how the reliability and robustness of these algorithms can be ensured. To answer this, a literature review is first conducted to investigate the barriers that are currently inhibiting the use of \ac{KRL} with \acp{BIM-KG}. Experiments are then designed and conducted to assess the nuances of the combination in question. 5 baseline \ac{KRL} models and 2 publicly available \acp{BIM-KG} are used for this. It is worth noting that the overall goal of the experiments is not to identify the best \ac{KRL} model configurations but rather to examine how model performance can be affected by modifications to the training step, selection of hyper-parameters, their optimization and initialization approaches, and dataset split mechanics.
+    This research question investigates effective ways to integrate and use linked building data (\acp{BIM-KG}) in the training and evaluation of \ac{KRL} algorithms, and how the reliability and robustness of these algorithms can be ensured. To answer this, a literature review is first conducted to investigate the barriers that are currently inhibiting the use of \ac{KRL} with \acp{BIM-KG}. Experiments are then designed and conducted to assess the nuances of the combination in question. 5 baseline \ac{KRL} models and 2 publicly available \acp{BIM-KG} are used for this. It is worth noting that the overall goal of the experiments is not to identify the best \ac{KRL} model configurations but rather to examine how model performance can be affected by modifications to the training step, selection of hyper-parameters, their optimization and initialization approaches.
 
     \item
-    \textbf{Research Question 3}: \emph{How can the prerequisites for integrating \ac{KRL} with \acp{BIM-KG} be formalized in a practical framework to enhance trust, reproducibility and understanding of KRL-based methods among AEC/FM stakeholders and researchers?} \\
+    \textbf{Research Question 3 (RQ3)}: \emph{How can the prerequisites for integrating \ac{KRL} with \acp{BIM-KG} be formalized in a practical framework to enhance trust, reproducibility and understanding of KRL-based methods among AEC/FM stakeholders and researchers?} \\
 
     To answer this question, the experimental results from \textit{Research Question 2} are used to delineate the prerequisites in question, which prerequisites are then used to define a step-by-step framework. To illustrate its implementation, a practical setup is devised consisting of a \ac{BIM} model, \ac{IoT} devices, and a prototype program of the framework wrapped inside an \ac{API}. Although a building automation use case is used to formulate the framework, the above setup can be used as a reference point for extensibility to other \ac{AEC/FM} domains such as heritage, quantity-takeoff and energy analysis.   
 \end{itemize}
@@ -92,22 +92,97 @@ although a building automation use case is used to formulate the framework, it c
 
 \section{Research Contributions}
 This research generally provides a foundation for enhancing trust, reproducibility and understanding of \ac{KRL}-based methods
-among AEC/FM stakeholders and researchers. \ac{KRL} has then analytics. The thesis reflects on the technical aspects, challenges, and benefits of using \acp{SWT} to formulate \acp{BIM-KG} for downstream \ac{KRL} tasks. This is an extension to what was previously known i.e. using \acp{SWT} to achieve semantic interoperability for mainly logical inference and complex querying. The proposed framework avails facility managers the foundational basis to develop more context-aware building controllers that adapt better to the stochastic building environment. The explicit research contributions are outlined below:
+among AEC/FM stakeholders and researchers. \ac{KRL} has then analytics. The thesis reflects on the technical aspects, challenges, and benefits of using \acp{SWT} to formulate \acp{BIM-KG} for downstream \ac{KRL} tasks. This is an extension to what was previously known i.e. using \acp{SWT} to achieve semantic interoperability for mainly logical inference and complex querying. The proposed framework avails facility managers the foundational basis to develop more context-aware building controllers that adapt better to the stochastic building environment. The explicit research contributions are outlined below:\\
+
+\noindent \textbf{Contributions from RQ1}\\
+\noindent \textbf{RQ1:} \textit{How can knowledge graphs be used to represent the semantic relationships between different building components and systems using domain-agnostic technologies for efficient utilization in downstream KRL tasks?}
+\begin{enumerate}
+\item 
+Demonstration of \ac{BIM-KG} Construction for \ac{KRL}
+    \begin{itemize}
+    \item 
+    Provided a detailed walkthrough on formulating \acp{BIM-KG} using domain-agnostic \acp{SWT}.
+
+    \item 
+    Provided a detailed narrative on how to identify small, modular and extensible ontologies for building reusable \acp{BIM-KG}, validating them via competency questions and standardized mechanisms such as \ac{SHACL} and \ac{SPARQL}
+
+    \item 
+    Highlighted common pitfalls that can have cascading effects on the the performance of \ac{KRL} models such as structural inconsistencies, data incompleteness, and redundancy.
+    \end{itemize}
+
+\item 
+Guidelines for ensuring \ac{BIM-KG} Data Quality in \ac{KRL}
+    \begin{itemize}
+    \item 
+    Emphasized the crucial role of data quality, detailing preliminary checks that ensure BIM-KGs are suitable for downstream learning.
+
+    \item 
+    Established a foundation for \ac{AEC/FM} researchers to identify further “data fitness” criteria relevant to specific \ac{KRL} use cases beyond this research's illustrative example.
+    \end{itemize}  
+\end{enumerate}
+
+
+
+\noindent \textbf{Contributions from RQ2}\\
+\noindent \textbf{RQ2:} \textit{How can KRL be used to learn the relationships formulated in RQ1 for building automation?}
 
 \begin{enumerate}
+\item 
+Performance Analysis of \ac{KRL} Models on \acp{BIM-KG}
+    \begin{itemize}
+    \item 
+    Conducted extensive experiments with five baseline \ac{KRL} models on two publicly available \ac{BIM-KG} datasets, focusing on understanding the nuances that can model performance across various training setups and hyperparameter configurations.
 
     \item 
-    Outline of technical aspects and key considerations for building an effective \ac{BIM-KG} for training \ac{KRL} models.
-    
+    Identified RotatE and TransE, coupled with NSSA loss and the Adam optimizer, as robust baselines for building automation scenarios. Demonstrated that older models such as TransE remain competitive with proper \ac{HPO}.
+    \end{itemize}
+
+\item 
+Insight into Hyperparameter Tuning
+    \begin{itemize}
     \item 
-    Domain-agnostic framework encapsulating technical prerequisites for integrating \ac{KRL} with \acp{BIM-KG} and the related evaluation strategies.
+    Systematically compared different hyperparameter selection and optimization strategies such as naive random search and a systematic \ac{HPO} search to show their distinct impacts on model performance.
+    \item 
+    Revealed the dataset-specific nature of optimal hyperparameter configurations, pointing to the need for flexible, data-specific \ac{HPO} approaches in \ac{BIM-KG} contexts.
+    \end{itemize} 
+\item 
+Framework for Ensuring Trust and Reproducibility
+    \begin{itemize}
+    \item 
+    Highlighted best practices—such as clear reporting of model architectures, training setups, and hyperparameters—to foster trust and reproducibility among \ac{AEC/FM} stakeholders.
+    \item 
+    Demonstrated that agreed-upon benchmark training datasets together with a transparent and standardized approach to model selection and \ac{HPO} lower adoption \ac{KRL} adoption barriers in the \ac{AEC/FM} industry.
+    \end{itemize} 
+\end{enumerate}
+
+\noindent \textbf{Contributions from RQ3}\\
+\noindent \textbf{RQ3:} \textit{How can the prerequisites for integrating KRL with BIM-KGs be formalized in a practical framework to enhance trust, reproducibility, and understanding of KRL-based methods among AEC/FM stakeholders and researchers?}
+
+\begin{enumerate}
+\item 
+Domain-Agnostic KRL Integration Framework
+    \begin{itemize}
+    \item 
+    Developed a step-by-step framework that encapsulates the technical prerequisites (from \ac{BIM-KG} construction to \ac{KRL} model training) needed to integrate \ac{KRL} into real-world AEC/FM workflows.
 
     \item 
-    Framework applicability testing setup consisting of a \ac{BIM} model, \ac{IoT} devices and a program of the framework wrapped inside an \ac{API}.
+    Structured these prerequisites based on empirical insights from the performance analysis in RQ2, ensuring that the framework addresses practical challenges such as data validation, model tuning, and scalability.
+    \end{itemize}
 
-    \item
-    Datasets, trained models and visualizations that were used for experimentation and evaluation.
-     
+\item 
+Proof-of-Concept Implementation
+    \begin{itemize}
+    \item 
+    Devised a high-level practical setup that includes a \ac{BIM} model, \ac{IoT} devices, and a prototype of the framework accessible via an \ac{API}.
+    \item 
+    Demonstrated how the framework can be extended to various \ac{AEC/FM} domains—heritage management, quantity take-off, and energy analysis—showing its flexibility beyond the initial building automation use case.
+    \end{itemize} 
+\item 
+Resource Sharing for Further Development
+    \begin{itemize}
+    \item 
+    Published the datasets, trained models, and visualization materials to encourage the research community to replicate, validate, or improve upon the research.
+    \end{itemize} 
 \end{enumerate}
 
 \section{Thesis Outline}
