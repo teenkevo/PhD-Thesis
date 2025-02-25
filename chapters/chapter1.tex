@@ -1,0 +1,131 @@
+\chapter{Introduction}
+\label{chap:introduction}
+\pagenumbering{arabic}
+
+The \ac{FM} life-cycle of buildings is characterized by a continuous flow and exchange of information. The involved parties are predominantly operational building systems, sensor networks, actuators, control agents\footnote{In this thesis, the term \textit{agent} is used to mean anything that can perceive the built environment around it, take control actions autonomously to achieve a specific set of goals, and may iteratively improve its performance by learning from the information around it. }, and building occupants. At the foundation of each party exists heterogeneous processes that inhibit the seamless flow of \textit{contextually rich information} needed for several downstream \ac{FM} tasks, of which building automation is the focal point of the investigation herein.
+
+This introductory chapter starts by framing the research context within the boundaries of ongoing efforts to address the issue encapsulated in the above statement. A proposal of the core research problem is then made, followed by its breakdown into more specific research questions. The aim and objectives of the study are then made explicit, and the scope of work is laid out. Finally, this chapter concludes with a summarized methodology, research outcomes, and the organizational structure for the rest of the thesis.  
+
+\section{Research Context and Motivation}
+With most people spending 80–90\% of their daily lives indoors, buildings have become the largest consumers of global energy due to heavy reliance on heating and air conditioning \citep{ASHRAE2016GuidelineEnvironments, Mannan2021IndoorStructure}. Undoubtedly, the building industry has continued to put pressure on the sustainability equilibrium of the natural environment\citep{Dong2021GreenhouseCountries, Woods2022HumiditysConditioning}. Notably, extremely high temperatures and prolonged heat waves have been recorded in many continents and countries \citep{Somerville2012HeatChange, Akompab2013AwarenessAustralia, Junk2019FutureIndicators, Hopke2020ConnectingWildfires, Miller2021HeatOutput, Barriopedro2023HeatChallenges, Elia2024CouplingGradient}. Moreover, the frequency, intensity, and duration of these heat waves is increasing rapidly, making adaptation to heat a priority \citep{Peng2011TowardChange, Mitchell2016AttributingChange,  Baniassadi2018EnergyCodes, Alam2019BalancingDesign, Kriebel-Gasparro2022ClimateAdult}. 
+
+Global energy efficiency policies and regulations are quickly evolving to reverse this trend \citep{Zhou2020Energy-efficientWaves, Viguie2020EarlyParis, InternationalEnergyAgencyIEA2023EnergyVersailles} and the ripple effects are being felt by building owners. They are increasingly being forced to develop buildings characterized by intricate automation systems and swarms of sensor networks towards optimal performance. With this ever-growing complexity of the built environment, so has the increase in the \textit{maintenance challenge}. Moreover, the already existing stochastic factors in play, such as occupancy behavior, building envelope tightness and variable weather patterns, only compound this problem. As a result, developing agents with contextually adaptive control policies has become a finicky process requiring exhaustive thought and care. \cite{Curry2012}'s investigation attributed this puzzle to difficulties in identifying and exploiting the inherent latent dependencies between the factors mentioned above.
+ 
+\subsection{The Facility Management Challenge}
+As soon as a building is commissioned, a chain of events is set into motion to ensure proper functionality of its systems and that operational efficiency targets are met in compliance with set regulations. Over the years, this \ac{FM} process has steered towards \textit{occupant-centricity}, which not only means that building occupants are getting more engaged in the operation process of the embedded building systems but also, optimization targets are not achieved at the expense of their comfort \citep{Park2018ComprehensiveReview, Park2019AControls, Park2019LightLearn:Learning, OBrien2020AnStandards, Park2022TowardHubs, Jia2023Occupant3.0, Deng2023Learning-BasedWorkplaces}. On that basis, \ac{FM} qualifies to be a \textit{multi-objective optimization problem} that requires a careful trade-off analysis between conflicting objectives (i.e., achieving both operational and energy efficiency while maintaining acceptable indoor air quality and thermal comfort) \citep{Toffolo2002, Delgarm2016, Shaikh2018, Yong2020Multi-objectiveParameters, Wang2023AnPerspectives}. 
+
+Just like any other stage of a building's life-cycle, \ac{FM} is a heavily data-driven process that involves multi-disciplinary stakeholders constantly exchanging and sharing \textit{heterogeneous} information, which is mainly attributed to their departmentalized data handling cultures. Any deficiencies that arise in managing this heterogeneity can arguably propagate to the building systems in the loop, leading to unintended and unexpected under-performing behaviour.
+
+\subsection{Digitization of the Facility Management Process}
+\label{subsec:digitization of FM}
+Traditionally, \ac{FM} information is collated by the design and construction team and piped to the operations team close to the handover stage of a building. At such a time when project budgets and deadlines are soon approaching their elastic limit, perhaps an important question to ask is \textit{“how often is this information checked for completeness, accuracy or reliability?”}. The answer to this question is arguably \textit{never}. To complicate matters further, some \ac{FM} information is stored using traditional \ac{CAD} drawings and paper files, making its utilization cumbersome and inefficient. As a result, building owners started to embrace \acp{CMSS} and \ac{CAFM} systems to capture \ac{FM} information in a more structured and digitized way. However, even with these, typical day-to-day operational information is usually locked down in a sea of \ac{PDF} files. All these challenges necessitate an efficient mechanism for capturing and propagating \ac{FM} information from the outset of a building’s design and construction to its operational agents.
+
+To an extent, \ac{BIM} has served in this role as the primary driver of digitization in the \ac{AEC/FM} industry by providing an efficient way of handling large amounts of building information (\textit{semantic} and \textit{geometric}) centrally within a three-dimensional model \citep{Borrmann2010}. However, several obstructions still lie on the critical path of sharing this model information \textit{within} and \textit{outside} the AEC industry making it hard for other domains to become part of the BIM story \citep{Pauwels2017a, Pauwels2017SemanticOverview, Jeroen2018}. Literature has attributed this exchange bottleneck to the schema design of \ac{BIM} ’s data-exchange model, \ac{IFC} \citep{Barbau2012, Beetz2009, El-Mekawy2010, Gomez-Romero2015, Msc2016}. Until 2016, the \ac{IFC} schema was only available in its native EXPRESS format, which is cumbersome to work with in domain applications such as building automation, geo-spatial, heritage and facility management \citep{Pauwels2016, Pauwels2016a}. 
+
+Specific to \ac{FM} is the \ac{COBie} standard, a subset of \ac{IFC} which encapsulates the industry’s best practices for exchanging \ac{FM} information between a construction firm and a facility management team \citep{WilliamEast2013FacilityView, Teicholz2018BIMManagers}.  Though \ac{COBie} ’s adoption and interest are on the rise, its spreadsheet architecture is cumbersome to navigate \citep{Anderson2012ConstructionOrganization, Kumar2021DevelopmentDatasheets, Kumar2021ExploringData} and there are still many misconceptions surrounding its use, and as a result, it is under-utilized.
+
+Meanwhile, independent of \ac{IFC} and outside the \ac{AEC/FM} industry, other powerful knowledge-representation techniques are trending with various disciplines able to interlink their heterogeneous datasets using \ac{SWT} underpinned by principles of the world wide web \citep{Berners-Lee2001,Berners-Lee2003, Berners-Lee2006}. Only recently, has there been increased research interest in applying this notion to the \ac{BIM} ecosystem as a mechanism of integrating, managing and extracting value from its heterogeneous data sources \citep{Barbau2012,Beetz2009,Pauwels2016a,Pauwels2016}.
+
+\subsection{Building Automation in Facility Management}
+
+Building automation is ideally a centralized process that involves the automated control of a building's electrical equipment such as \ac{HVAC}, lighting and access control, all driven by sensor networks, actuators and control agents, which follow a set of pre-defined or self-learnt control policies.  
+
+As mentioned earlier, \ac{FM} is a multi-objective optimization problem, and \ac{ML} is a promising solution that is being widely adopted to solve such problems \citep{Toffolo2002, Asadi2012Multi-objectiveApplication, Shaikh2018, Chen2018b, Merlet2022IntegrationRetrofit, Wijeratne2022Multi-objectivePhase}. At the foundation of ML is the principle of first developing a statistically-driven mathematical model, a mechanism for ingesting data in its most raw form while subsequently learning to extract the most relevant information (typically \textit{hidden} \textit{features} and  \textit{patterns}) necessary for performing a specific downstream task. Although there are several advancements that are making it possible for \ac{ML} models to extract value from a concoction of disparate data sources, many \ac{ML} methods are \textit{domain-specific} and tailored to ingest data of the same format. For example, \ac{RNN} and \ac{LSTM} models \citep{Hochreiter1997LongMemory} are designed to handle sequence prediction problems---machine translation and speech recognition---involving sound and text data while \ac{CNN} models \citep{LeCun1998Gradient-basedRecognition} specialize in learning from image and video data.     
+
+On the other hand, the building automation domain is complex, highly heterogeneous and fragmented. It exhibits data with multiple modalities, each with different statistical properties. Therefore, a naive application of typical \ac{ML} workflows in this domain would lead to models that apply deductions with low precision, efficiency and scalability. In pursuit of an integrator for heterogeneous \ac{FM} domain information, several proposals anchored by \ac{SWT} have been put forward in the literature \citep{Pauwels, Pauwels2016, Pauwels2017a, Rasmussen2019a, Pauwels2022KnowledgeEnvironment}. The resulting semantic glue has made it easier for facility managers to link and holistically analyze data collected across multiple operational building systems. This work also envisages such an integrator to be a data fusion strategy that can be embedded in the learning pipeline of building automation \ac{ML} models towards improved \textit{collective reasoning}. However, this is still in its infancy due to the limited understanding of the peculiarities arising from linking \ac{FM} data that is encapsulated in \acp{BIM-KG} with \ac{ML} models. Certain application fields such as social network analysis, drug discovery in bioinformatics, and fraud detection in e-commerce often deal with immensely interwoven and complex dataset structures. \ac{KRL}, and \ac{SRL} are subsets of \ac{ML} that have made significant strides in understanding the idiosyncrasies of these datasets \citep{Nickel2011, Nickel2012FactorizingYAGO, 
+Bengio2013RepresentationPerspectives,Nickel2016AGraphsb, Lin2018KnowledgeReview, Yi2022GraphApplications}. However, the same cannot be said for their application in the \ac{FM} domain yet it exhibits similarly intricate datasets. This thesis aims to explore this research direction. 
+
+Before crafting the problem statement, it is necessary to delineate the distinction between \ac{KRL} and \ac{SRL}. Both are related but are distinct subsets of \ac{ML}. We shall start with what they both have in common, which is the mechanics for extracting knowledge from data and representing it in a structured format for downstream tasks. \ac{KRL} does this by learning a low-dimensional representation of a dataset (typically a knowledge graph) while preserving the underlying semantic meaning \citep{Liu2016KnowledgeReview}. By contrast, \ac{SRL} uses probabilistic models to capture the uncertainty and dependency structure of entities in linked data. This approach allows a model to make probabilistic predictions about the relationships between the linked datasets and to reason about the uncertainty of these predictions \cite{Ginestet2010IntroductionLearning}. In this thesis, focus is placed on \ac{KRL} models because they offer two advantages that align well with the research objectives, i.e., intrinsic compatibility with knowledge graphs \citep{Lin2018KnowledgeReview} and extensibility to deep learning approaches \citep{Wang2024LargeSurvey}. The efforts to integrate \ac{KRL} with \acp{BIM-KG} are still very slow, primarily due to the absence of standardized procedures for training and evaluating \ac{KRL} models within the \ac{BIM} context.
+
+\section{Problem statement}
+\label{ps}
+
+Crafting this thesis' problem statement is primarily driven by the following research question. \\
+
+\noindent \textbf{How can \ac{FM} datasets originating from various sources in and outside of a building be efficiently integrated into the self-learning process of building automation agents?} \\
+
+\ac{FM} datasets are inherently heterogeneous and fragmented. If \textit{expressive} enough mechanisms are orchestrated to \textit{represent} and \textit{unify} these datasets, the resulting analytics have the potential to confirm known \ac{FM} inefficiencies, shed light on new ones, or prove previous hypotheses wrong. Whilst \ac{SWT}s have emerged as the promising orchestrator to achieve this, thus far, their primary focus has been on achieving semantic interoperability for logical inference and complex querying. However, what is still in its infancy is investigating how to leverage the inherent relational structure of semantically inter-linked \ac{FM} datasets as a mechanism for message passing and information propagation to facilitate \textit{collective contextual reasoning}\footnote{Inter-linked data exhibits patterns and dependencies that occur between attributes and relationships of different entities of the dataset. \ac{ML} methods that can exploit these patterns \textit{collectively} in their learning pipeline are referred to in this thesis as exhibitants of \textit{collective contextual reasoning.}} in building automation agents. In an attempt to bridge this gap, this thesis builds upon the work of multiple earlier researchers to propose a \textit{\ac{KRL-based BCF}}. To the best of the author's knowledge, no attempts have been made to report model architectures, training setups and hyperparameters to enhance trust, reproducibility and understanding of \ac{KRL}-based methods among \ac{AEC/FM} stakeholders and researchers. It is important to note that this framework should be taken as exemplary rather than exclusive and a feasibility study is presented to demonstrate how the proposed framework can be deployed in practice.
+
+\section{Research Questions}
+\label{sec:research questions}
+Based on the above problem statement, a design of the following research questions is deemed appropriate to guide the direction of this thesis.
+\begin{itemize}
+    \item 
+    \textbf{Research Question 1}: \textit{How can knowledge graphs be used to represent the semantic relationships between different building components and systems using domain-agnostic technologies for efficient utilization in downstream \ac{KRL} tasks?}\\
+
+    This research question addresses an important data management problem in the highly fragmented and data-intensive building automation domain. The question is tackled by first analyzing the current literature for relevant theories, methods, and tools that have been developed to capture semantic relationships between different building components and systems with regard to automation and control. Specific focus is placed on the use of ontologies and \acp{SWT} to formulate \acp{BIM-KG} while investigating their fit within the boundaries \ac{KRL}.\\
+    
+    \item 
+    \textbf{Research Question 2}: \textit{How can \ac{KRL} be used to learn the relationships formulated in Research Question 1 for building automation?} \\
+
+    This research question investigates effective ways to integrate and use linked building data (\acp{BIM-KG}) in the training and evaluation of \ac{KRL} algorithms, and how the reliability and robustness of these algorithms can be ensured. To answer this, a literature review is first conducted to investigate the barriers that are currently inhibiting the use of \ac{KRL} with \acp{BIM-KG}. Experiments are then designed and conducted to assess the nuances of the combination in question. 5 baseline \ac{KRL} models and 2 publicly available \acp{BIM-KG} are used for this. It is worth noting that the overall goal of the experiments is not to identify the best \ac{KRL} model configurations but rather to examine how model performance can be affected by modifications to the training step, selection of hyper-parameters, their optimization and initialization approaches, and dataset split mechanics.
+
+    \item
+    \textbf{Research Question 3}: \emph{How can the prerequisites for integrating \ac{KRL} with \acp{BIM-KG} be formalized in a practical framework to enhance trust, reproducibility and understanding of KRL-based methods among AEC/FM stakeholders and researchers?} \\
+
+    To answer this question, the experimental results from \textit{Research Question 2} are used to delineate the prerequisites in question, which prerequisites are then used to define a step-by-step framework. To illustrate its implementation, a practical setup is devised consisting of a \ac{BIM} model, \ac{IoT} devices, and a prototype program of the framework wrapped inside an \ac{API}. Although a building automation use case is used to formulate the framework, the above setup can be used as a reference point for extensibility to other \ac{AEC/FM} domains such as heritage, quantity-takeoff and energy analysis.   
+\end{itemize}
+
+\section{Aim}
+To propose and evaluate a \ac{KRL}-based Building Control Framework that leverages the inherent relational structure of semantically inter-linked \ac{FM} datasets to facilitate collective contextual reasoning in building automation agents.
+
+\section{Objectives}
+To achieve the above goal, the following research objectives must be met.
+
+\begin{enumerate}
+
+	\item
+	To explore the use of knowledge graphs to represent the semantic relationships between different building components and systems using domain-agnostic technologies.
+ 
+	\item 
+	To investigate the use of \ac{KRL} to learn the relationships between different building components and systems within the context of building automation and control.
+ 
+        \item
+    To formulate a practical framework encapsulating the prerequisites for integrating \ac{KRL} with \acp{BIM-KG}.
+\end{enumerate}
+
+\section{Research Scope and Limitations}
+Within the context of \acp{BIM-KG}, this thesis targets a specific set of domain-agnostic data modelling approaches that are anchored by \acp{SWT}. Rather than developing new data modelling vocabularies (ontologies), this work adopts already existing ones from the \ac{LBDCG}. However, due to the overly flexible and open-ended nature of the Semantic Web, the vocabulary choices are guided by carefully crafted competency questions delineating the objectives a \ac{BIM-KG} needs to satisfy to stay relevant to the \ac{KRL} problem at hand. Building a \ac{BIM-KG} is not a desired output of this research but rather taking a deep dive into the technical aspects and key considerations for building an effective \ac{BIM-KG} for training \ac{KRL} models. This thesis employs a prototypical data modelling example that should not be taken as exclusive but rather illustrative as several alternative data modelling vocabularies can equally achieve analogous results to those discussed herein. 
+
+To investigate the integration of \ac{KRL} to \acp{BIM-KG}, an experimental approach is adopted using 5 baseline \ac{KRL} models and 2 publicly available \ac{BIM-KG} datasets. The restriction to baseline models is mainly for simplicity reasons, considering that \ac{KRL} adoption in the \ac{AEC/FM} domain is still in its early stages. At such infancy, focusing on more complex \ac{KRL} model variations is deemed counterproductive, especially as the \ac{ML} space rapidly evolves with the advent of \acp{LLM}. Finding the best \ac{KRL} model configuration is not the goal of the experiments. Instead, they exclusively focus on examining how modifications to the training step, selection of hyper-parameters, their optimization and initialization approaches, and dataset split mechanics directly affect model performance. The experimental results are used to analyze and formalize the prerequisites for integrating \ac{KRL} with \acp{BIM-KG} in a domain-independent framework. This means that
+although a building automation use case is used to formulate the framework, it can be extended and applied to other \ac{AEC/FM} domains such as heritage, quantity-takeoff and energy analysis. While developing the framework, several out concepts are introduced but some are not core to the framework, fall outside of its scope, and are labelled as such when they arise. Nevertheless, they are discussed due to their potential for offering extensibility to the framework in future research. The framework's adoption is demonstrated using a feasibility study setup consisting of a \ac{BIM} model, \ac{IoT}, and a prototype program of the framework wrapped inside an Application Programming Interface (API). Again, this setup should be taken as illustrative rather than exclusive as it only serves the purpose of demonstrating the applicability of the proposed framework in real-life applications.
+
+\section{Research Contributions}
+This research generally provides a foundation for enhancing trust, reproducibility and understanding of \ac{KRL}-based methods
+among AEC/FM stakeholders and researchers. \ac{KRL} has then analytics. The thesis reflects on the technical aspects, challenges, and benefits of using \acp{SWT} to formulate \acp{BIM-KG} for downstream \ac{KRL} tasks. This is an extension to what was previously known i.e. using \acp{SWT} to achieve semantic interoperability for mainly logical inference and complex querying. The proposed framework avails facility managers the foundational basis to develop more context-aware building controllers that adapt better to the stochastic building environment. The explicit research contributions are outlined below:
+
+\begin{enumerate}
+
+    \item 
+    Outline of technical aspects and key considerations for building an effective \ac{BIM-KG} for training \ac{KRL} models.
+    
+    \item 
+    Domain-agnostic framework encapsulating technical prerequisites for integrating \ac{KRL} with \acp{BIM-KG} and the related evaluation strategies.
+
+    \item 
+    Framework applicability testing setup consisting of a \ac{BIM} model, \ac{IoT} devices and a program of the framework wrapped inside an \ac{API}.
+
+    \item
+    Datasets, trained models and visualizations that were used for experimentation and evaluation.
+     
+\end{enumerate}
+
+\section{Thesis Outline}
+\begin{enumerate}
+
+    \item 
+    \textbf{Chapter 1}: Introduces the research context, motivation, scope, research questions and objectives of the study.
+
+    \item 
+    \textbf{Chapter 2}: Situates the research within the scholarly discourse of \ac{BIM}, \acp{BIM-KG}, and \ac{KRL}, and outlines the research gaps this thesis addresses.
+    
+    \item 
+    \textbf{Chapter 3}: Details the experimental setups, research methods used and their significance in addressing the objectives.
+
+    \item 
+    \textbf{Chapter 4}: Presents a summary of the experimental results and discusses the findings in alignment with the defined research questions.
+
+    \item
+    \textbf{Chapter 5}: Dissects the findings of chapter 4 and reflects on them to provide insight into possible future research directions while delineating the limitations faced in this thesis.
+\end{enumerate}
+

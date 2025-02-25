@@ -1,0 +1,140 @@
+% -------------------------------------------
+% Authored by Kevin Luwemba Mugumya, June 2020
+% PhD Thesis 
+% -------------------------------------------
+
+% -------------------------------------------
+% [-] DOCUMENT CLASS
+% -------------------------------------------
+
+\documentclass[12pt, a4paper,twoside]{report}
+
+% -------------------------------------------
+% [-] PREAMBLE
+% -------------------------------------------
+
+%% packages
+\input{settings/packages}
+
+%% Chapter title format
+% \titleformat{\chapter}[display]{\normalfont\bfseries}{}{0pt}{\Huge}
+
+%% listings custom style settings
+\input{settings/listing_style}
+
+%% page settings
+\input{settings/global_page_settings}
+
+%% table of contents settings
+\input{settings/toc_settings}
+
+%% defined macros and commands
+\input{settings/macros}
+
+
+% \titleformat
+% {\chapter} % command
+% [display] % shape
+% {\bfseries\Huge\raggedleft} % format
+% {Chapter \thechapter} % label
+% {0.5ex} % sep
+% {
+%     \vspace{1ex} % Adjust spacing as needed
+%     \raggedleft % Align chapter number to the right
+%     \color{gray} % Adjust font size and color
+% } % before-code
+% [
+% \vspace{1ex}% Adjust spacing as needed
+% \centering % Center the chapter title
+% \rule{\textwidth}{0.5pt}% Adjust thickness as needed
+% ] % after-code
+
+%% roman page numbering for front-matter
+\pagenumbering{roman}
+
+%% prevent wierd paragraph spaces
+\raggedbottom
+
+% -------------------------------------------
+% [-] START OF THE DOCUMENT
+% -------------------------------------------
+
+\begin{document}
+
+% -------------------------------------------
+% [-] PREFACE PAGES
+% -------------------------------------------
+
+% [-] Title Page
+\input{prefaces/title_page}
+
+% [-] Preface
+\input{prefaces/acknowledgements}
+\setcounter{page}{1}
+
+\newpage
+\vspace*{\fill}
+\begin{center}
+    {\LARGE \textbf{Dedication}} \\[2em]  % Title in larger font with some spacing
+    This thesis is dedicated to my father Vincent, my late mother Esther, and my late sister Carine
+\end{center}
+\vspace*{\fill}
+
+% [-] Abstract
+%\linenumbers % command for initiating line numbers
+\input{prefaces/abstract}
+
+% [-] Table of Contents
+\newpage
+\tableofcontents
+% \addcontentsline{toc}{chapter}{Table of Contents}
+
+% [-] List of Publications
+\input{prefaces/list_of_publications}
+
+% [-] List of Figures
+\newpage
+\listoffigures 
+
+% [-] List of Tables
+\newpage
+\listoftables
+
+
+% [-] List of Abbreviations
+\input{prefaces/list_of_abbreviations}
+
+
+% -------------------------------------------
+% [-] MAIN BODY
+% -------------------------------------------
+
+%% header and footer settings for the main body
+\input{settings/mainbody_header_and_footer_settings}
+
+
+% [-] Introduction:
+\input{chapters/chapter1}
+% [-] Literature Review
+\input{chapters/chapter2}
+% [-] Research Methods: 
+\input{chapters/chapter3}
+% [-] Results and Discussion: 
+\input{chapters/chapter4}
+% [-] Summary implications and outcomes: 
+\input{chapters/chapter5}
+% [-] Bibliography:
+\bibliographystyle{apalike}
+\small
+\bibliography{literature/references}
+% [-] Appendices:
+\newpage
+\addcontentsline{toc}{part}{Appendices}%
+\appendix
+\input{appendices/appendix}
+
+% -------------------------------------------
+% [-] END OF THE DOCUMENT
+% -------------------------------------------
+\end{document}
+

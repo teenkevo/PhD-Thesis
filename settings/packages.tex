@@ -1,0 +1,82 @@
+%% packages
+\usepackage{blindtext} % needed for creating dummy text passages
+\usepackage{amsmath} % needed for command eqref
+\usepackage{amssymb} % needed for math fonts
+\usepackage{natbib}
+\usepackage{multicol}
+\usepackage{lscape}
+\usepackage{adjustbox}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{algpseudocode}
+\usepackage{algorithm}
+\usepackage{pythontex}
+\usepackage{titlesec}
+\usepackage{subcaption}
+\usepackage{fancyhdr}
+\usepackage{settings/kbordermatrix}
+\usepackage{lineno} % needed for adding line numbers
+\usepackage{xargs} % needed for working with the todos macros
+\usepackage{svg}
+\usepackage{multirow}
+
+
+% acronyms with page
+% \usepackage[printonlyused,withpage]{acronym} 
+% acronyms with no page
+\usepackage[printonlyused]{acronym} 
+
+\usepackage[colorlinks=true ,breaklinks]{hyperref}
+\usepackage[hyphenbreaks]{breakurl}
+
+\usepackage{xcolor}
+\definecolor{c1}{rgb}{0,0,0} % blue
+\definecolor{c2}{rgb}{0,0.3,0.9} % light blue
+\definecolor{c3}{rgb}{0,0,0} % red blue
+\hypersetup{
+    linkcolor={c1}, % internal links
+    citecolor={c2}, % citations
+    urlcolor={c3} % external links/urls
+}
+
+\usepackage{url}
+\usepackage{cleveref}
+
+\usepackage[T1]{fontenc}
+% Linux libertine font settings for text and math. make false for \ttfamily 
+\usepackage[tt=false]{libertine}
+% (math commented out not needed)
+% \usepackage{libertinust1math}
+
+ 
+\usepackage{tocbibind}
+
+%  Remove TOC page from the ToC
+% \usepackage[nottoc]{tocbibind} % needed for displaying bibliography and other in the table of contents
+
+\usepackage{graphicx} % needed for \includegraphics
+\graphicspath{{figures/}{../figures/}}
+
+\usepackage{longtable} % needed for long tables over pages
+\usepackage{bigstrut} % needed for the command \bigstrut
+\usepackage{enumerate} % needed for some options in enumerate
+\usepackage[textwidth=20mm]{todonotes} % needed for todos
+\usepackage{makeidx} % needed for creating an index
+\makeindex
+
+\usepackage{datetime}% needed for datetime
+
+% change format of data to July 2024
+\renewcommand{\today}{\monthname[\month] \the\year}
+
+% ToC title name
+\renewcommand{\contentsname}{Table of Contents}
+
+% \renewcommand\cftchapafterpnum{\vskip0pt}
+% \renewcommand\cftsecafterpnum{\vskip0pt}
+
+% for drawing 
+\usepackage{tikz}
+\usetikzlibrary{decorations.pathreplacing, calligraphy}
+
+\usepackage{lipsum}

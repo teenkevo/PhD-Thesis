@@ -1,0 +1,48 @@
+\chapter{Conclusions and Recommendations For Future Research} 
+\label{chap:conclusions}
+
+This thesis has examined several aspects of \ac{KRL} with respect to \acp{BIM-KG}, which will be summarized in this chapter while referencing the research questions. This section will conclude with a discussion of interesting directions for future research.
+
+\section{Summary}
+\acp{BIM-KG} are increasingly being adopted in the \ac{AEC/FM} field for semantic interoperability and logical inference. Learning from these knowledge graphs using \ac{KRL} is still in its infancy. This thesis has identified that the efforts to integrate \ac{KRL} with \acp{BIM-KG} are still very slow, primarily due to the absence of standardized procedures for training and evaluating \ac{KRL} models in a reproducible and fair manner. For \ac{KRL} to impact the \ac{AEC/FM} domain, this work has emphasized the critical importance of comprehensively reporting model architectures, training setups and hyperparameters to enhance trust and understanding of \ac{KRL}-based methods among \ac{AEC/FM} stakeholders and researchers. This research has addressed the following research questions. 
+
+\begin{enumerate}
+    \item 
+    \textbf{Research Question 1}: \textit{How can knowledge graphs be used to represent the semantic relationships between different building components and systems using domain-agnostic technologies for efficient utilization in downstream \ac{KRL} tasks?}
+
+    This thesis has discussed how \acp{SWT} can be used to develop \acp{BIM-KG} in a data-agnostic fashion. An exploratory walkthrough was made to highlight the technical aspects and key considerations for building an effective \ac{BIM-KG} for training \ac{KRL} models. Notably, the need to identify small small and modular ontologies using domain-expert competency questions that can be validated against using mechanisms such as \ac{SHACL} and \ac{SPARQL}. Furthermore, because the potency of a \ac{KRL} model is tightly bound to the quality of the input knowledge graph, it is important to check for \ac{BIM-KG} issues that affect \ac{KRL} message-passing. By answering this question, a foundation was laid for \ac{AEC/FM} researchers to explore other important \ac{BIM-KG} issues to check for prior to performing downstream \ac{KRL} tasks.
+    
+    \item
+    \textbf{Research Question 2}: \textit{How can KRL be used to learn the relationships formulated in Research Question 1 for building automation?}
+
+    From the outset, this thesis hypothesized that \ac{KRL} can be used to learn the hidden patterns within a \ac{BIM-KG} by leveraging message-passing to propagate learnt information throughout all nodes in the graph.The perception is that imbuing building automation agents with holistic information about the buildings they control can support context-aware decision-making during downstream automation tasks. To answer research question 2, this work used performance analysis experiments to examine how model performance can be affected by modifications to the training step, selection of hyper-parameters and their optimization. This research identified models RotatE and TransE, NSSA loss and Adam optimizer as robust baselines when integrating \ac{KRL} with \acp{BIM-KG}. Throughout the experiments, it was observed that older models like TransE can still be competitive with optimized training and \ac{HPO} configurations. Furthermore, despite extensive hyper-parameter searches, there was considerable variance among top-performing model configurations, indicating the need for nuanced parameter combinations. This complexity suggests that manual tuning may not yield optimal results, advocating for the adoption of \ac{HPO} strategies. Furthermore, the disparity in hyper-parameters between the two datasets underscores the influence of dataset-specific parameters. Finally, random search methods when repeated sufficiently, yielded configurations comparable to more systematic approaches, albeit in less time.
+
+    \item
+    \textbf{Research Question 3}: \textit{How can the prerequisites for integrating \ac{KRL} with \acp{BIM-KG} be formalized in a practical framework to enhance trust, reproducibility and understanding of \ac{KRL}-based methods among \ac{AEC/FM} stakeholders and researchers?}
+
+    To answer this question, the experimental results from research question 2 were used to deduce the prerequisites for integrating \ac{KRL} with \acp{BIM-KG}, which prerequisites are then used to define a step-by-step framework. To illustrate its implementation, a practical setup is devised consisting of a IoT devices, and a prototype program of the framework wrapped inside an API. Although a building automation use case is used to formulate the framework, the setup serves as a reference point for extensibility to other \ac{AEC/FM} domains.     
+\end{enumerate}
+
+\section{Recommendations for future work}
+This section briefly outlines interesting directions for future research that can improve the framework's capabilities, explainability, and computational efficiency within the building automation domain.
+
+\subsection{Enforcing onset \ac{SHACL} validations and schema conformity}
+Instead of attempting to address duplicates and inconsistencies later on in the \ac{KRL} pipeline, using \ac{SHACL} restrictions at the outset of \ac{BIM-KG} curation might be a proactive method to ensure consistency from the beginning. In addition to onset \ac{SHACL} validations, starting with a clear and consistent schema that specifies the kinds of entities and relationships that will be included in the knowledge graph can improve the quality of the training data used to learn representations resulting in more accurate and effective models. In its present form, the research's framework does not explicitly account for the erroneous nature of already existing \acp{BIM-KG}, which can potentially diminish the accuracy of the learnt \ac{KRL} embeddings.
+
+\subsection{Learning from multi-modal \ac{BIM}-based knowlegde graphs}
+Multi-modal \acp{BIM-KG} have the capacity to represent different types of building information which are usually of different formats and frequently maintained in separate data silos. Integrating these modalities into a single knowledge graph can provide a more comprehensive understanding of a building, allowing for more sophisticated reasoning by building control agents. Learning from multi-modal knowledge graphs poses several challenges for \ac{KRL}. First, the embeddings must be capable of capturing the interactions between multiple modalities, which may necessitate the development of new embedding models. Second, different modalities may have varying degrees of sparsity or noise, necessitating the use of specialized or fine-tuned optimizers, loss functions and performance metrics.
+
+\subsection{Explainability improvements}
+It may not always be obvious how the learnt \ac{KRL} embeddings were derived or which exact factors influenced them. This research has already shown how combinatorial the problem of choosing a training setup is. This complexity inherently translates to poor model explainability. To alleviate this, future research can focus on including rule-based systems that make the decision-making process more transparent and interpretable as the reasoning behind the decisions can be traced back to the specific rules being used. This would help building automation specialists better understand and trust the decisions being made in instances where the \ac{KRL} model's choices directly affect the physical environment and the occupants in it. 
+
+\subsection{A need for agreed-upon fair evaluation protocols and novel datasets}
+A major obstacle to the development and assessment of \ac{KRL}-\ac{BIM-KG} pipelines is the absence of agreed-upon evaluation protocols and benchmark data sets. To address this issue, it is essential to develop fair and reproducible evaluation protocols for comparing the performance of various \ac{KRL}-\ac{BIM-KG} pipelines. Similarly, creating new benchmark datasets that are open to the research community just like in the biological field can aid in fairer evaluation of \ac{KRL}-\ac{BIM-KG} pipelines.
+
+\subsection{Security issues}
+\ac{KRL} embeddings capture the holistic context of a knowledge graph which makes them susceptible to a variety of security vulnerabilities such as adversarial alterations. In a building's context, these can have serious implications for building safety and efficiency. To address these security concerns, several defence mechanisms can be developed such as encryption and training the \ac{KRL} model using a mix of clean and adversarial data an IoT device may encrypt data before delivering it to the \ac{KRL} model, preventing attackers from intercepting and altering the data to improve its resistance to attacks.
+
+
+
+
+
+

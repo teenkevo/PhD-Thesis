@@ -1,0 +1,663 @@
+\chapter{Methodology}
+\label{chap:Research methods}
+
+Taking into account the research questions posed in \autoref{sec:research questions} and the research gaps identified in \autoref{sec:research gaps}, this chapter presents a detailed narrative of the steps taken to develop and implement the \ac{KRL-based BCF}. For better understanding, this methodology is broken down into 2 core steps.
+
+\begin{enumerate}
+    \item 
+    \textbf{\acf{LBD} modeling}: This section walks through a prototypical data modeling example to delineate the technical aspects and key considerations for building an effective \ac{BIM-KG} for training \ac{KRL} models. Although a building automation use case is used, the same steps can be used for other domains such as heritage, quantity-takeoff and energy analysis. 
+
+    \item 
+    \textbf{Performance analysis of \ac{KRL} on \ac{LBD}}: This section explores the integration of \ac{KRL} with \ac{LBD} (\acp{BIM-KG}), focusing on the use of performance analysis experiments whose goal is not to identify the best \ac{KRL} model configurations, but rather examine more closely how model performance can be affected by modifications to the training step, selection of hyperparameters, their optimization and initialization approaches and data set split mechanics.
+\end{enumerate}
+
+The experimental results from step 2 are used to define the prerequisites for integrating \ac{KRL} with \acp{BIM-KG} in a domain-independent framework. Again, although a building automation use case is used to formulate the framework, it is extensible to other \ac{AEC/FM} domains and a prototype will be presented to illustrate such extensions while assessing the feasibility and applicability of the framework.
+
+\begin{figure}[!th]
+    \centering
+    \includegraphics[width=1.0\textwidth]{figures/Methodology.pdf}
+    \caption{The research methodology overview} \label{fig: research methodology overview}
+\end{figure}
+
+\section{\acf{LBD} Modeling}\label{sec: linked building data modeling}
+This work adopts domain-agnostic \acp{SWT} to demonstrate the process of developing a \ac{BIM-KG} within the building automation domain while using carefully crafted competency questions to scope the specific objectives that the \ac{BIM-KG} needs to satisfy.
+
+\subsection{Competency Questions as an \ac{LBD} Modeling Guide}
+
+Rather than develop new data modelling vocabularies (ontologies), this work adopts existing vocabularies from the \ac{LBDCG} \citep{W3C-LinkedDataCommunityGroup2018}. A specific ontology of interest is the ifcOWL ontology \citep{Pauwels2016}. As per the \ac{IFC}4 Add2 release\footnote{\url{https://standards.buildingsmart.org/IFC/DEV/IFC4/ADD2_TC1/OWL/index.html}}, ifcOWL has about 770 classes,
+approximately 1190 object properties, and around 60 datatype properties. This granularity
+is one of ifcOWL’s main strengths, offering a level of detail that surpasses many other
+\ac{BIM} ontologies. It caters to a wide array of applications from architectural design to facility management. However, this granularity can pose challenges, as the numerous classes and properties, along with their complex relationships, can become unwieldy for certain smaller use cases. Additionally, there is a risk of
+higher computational demands for querying and inference, potentially hindering performance
+in real-time building automation tasks applications. Given this, smaller and more focused ontologies, some branching off ifcOWL need to be adopted. Throughout this section, precise competency questions are crafted to guide the choice of modular ontologies and to help maintain focus on the objectives that the curated \ac{LBD} model (\ac{BIM-KG}) has to fulfil.
+
+\begin{enumerate}
+\item 
+\textbf{Competency Question 1 (CQ1)}: \textit{How to semantically describe the high-level concepts of a building in a way that formulates a semantic extension baseline for describing low-level building information relevant for indoor environment monitoring and control?}
+
+ To answer this question, the \acf{BOT}\footnote{https://w3c-lbd-cg.github.io/bot/} \citep{Rasmussen2017} is employed as it is deemed appropriate for encoding relationships between the main components of a building (site, building, storey and space) using a highly modular and simplistic set of semantic blocks. In \ac{BOT}, a building consists of zones in a hierarchy. The subclass of a zone is a site which contains a building(s), storey(s), and a space(s). A zone can be adjacent to another zone or even contain other zones. It can also be bounded by physical building elements or even contain them. Building elements can also host other elements (a wall hosting a sensor). \Autoref{BOT classes} summarizes the classes adopted from \ac{BOT} while \autoref{BOTBuilding} provides an intuitive description of how \ac{BOT} is used to describe a site, \texttt{<UNM>}, having a building, \texttt{<Block\_B>}, containing a storey, \texttt{<Floor\_3>} with a certain space, \texttt{<Office\_204>}.
+ \begin{figure}[b]
+    \centering
+    \includegraphics[width=1.0\textwidth]{figures/BOT.eps}
+    \caption{Using BOT classes and properties to describe the high level semantic topological details of a building} \label{BOTBuilding}
+\end{figure}
+\begin{table}[t]
+	\centering
+ \caption{BOT classes and properties to be adopted}
+	\begin{tabular}{l|l|l}
+		\hline \hline
+		Classes (domain) & Properties & Classes(range) \bigstrut \\ \hline
+		\texttt{bot:Zone} & \texttt{bot:containsZone} & \texttt{bot:Zone} \bigstrut \\
+		& \texttt{bot:adjascentZone} & \texttt{bot:Zone} \bigstrut \\
+		\texttt{bot:Site} & \texttt{bot:hasBuilding} & \texttt{bot:Building} \bigstrut \\
+		\texttt{bot:Building} & \texttt{bot:hasStorey} & \texttt{bot:Storey} \bigstrut \\
+		\texttt{bot:Storey} & \texttt{bot:hasSpace} & \texttt{bot:Space} \bigstrut \\
+		\texttt{bot:Space} & \texttt{bot:containsElement} & \texttt{bot:Element} \bigstrut \\
+		\texttt{bot:Element} & \texttt{bot:hostsElement} & \texttt{bot:Element} \bigstrut \\
+	\end{tabular}
+	
+	\label{BOT classes}
+\end{table}
+ The respective entity connections are made via the object properties; \texttt{bot:hasBuilding}, \texttt{bot:hasStorey} and \texttt{bot:hasSpace}. Explicitly asserted relationships/properties are shown by the solid line arrows while those that are automatically inferred are shown by the dotted line arrows. The back-end inference rules at play here, are defined in \ac{BOT} via the ranges and domains summarized in \autoref{BOT classes}). A corresponding machine-readable serialization (Turtle format) of the data model (\ac{BIM-KG}) is shown in \autoref{lst:BOTbuildingttl}. With a \ac{BOT} foundation, semantic extensions can be made to describe low-level details about specific features of interest contained in the space, \texttt{<Office\_204>} such as sensors and walls via another object property, \texttt{bot:containsElement} as the extension point.   
+
+
+    
+\begin{lstlisting}[language=N3, caption={Turtle serialization of the information modelled in figure above}, label=lst:BOTbuildingttl]
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix bot: <https://w3id.org/bot#> .
+
+# Site location (UNM) for some building of interest (Block_B)
+<UNM> a bot:Site ;
+  bot:hasBuilding <Block_B> .
+
+# Block_B has some storey of interest Floor_3
+<Block_B> bot:hasStorey <Floor_3> .
+
+# Floor_3 has some space(zone) of interest Office_204
+<Floor_3> bot:hasSpace <Office_204> .
+\end{lstlisting}
+
+\item 
+\textbf{Competency Question 2 (CQ2)}: \textit{How to semantically describe a feature of interest within an indoor space while encoding its measurable properties, corresponding property values and property states in a way that allows tracking changes, deletions and revisions?}
+
+For this question, the \acf{SSN}\footnote{https://www.w3.org/TR/vocab-ssn/} \citep{Haller2017} ontology is adopted. At its core, exists a lightweight but self-contained ontology \ac{SOSA} encapsulating elementary classes necessary for the semantic description of features of interest and their properties, sensor observations, and feature sampling procedures to describe tractable sensor observations and actuation behaviour. Furthermore, the \ac{SEAS} \citep{Lefrancois2016} ontology is used to avail semantic extensions to \ac{SSN}. \ac{SEAS} is an ecosystem of modules that together, provide semantic vocabulary to describe physical systems and their interrelations. Among these, is the \texttt{seas:FeatureOfInterestOntology}\footnote{https://w3id.org/seas/FeatureOfInterestOntology} for describing features of interest and their properties and the \texttt{seas:EvaluationOntology}\footnote{https://w3id.org/seas/EvaluationOntology} for describing evaluations of these properties. However, these natively have no semantics to encode property states in a way that can be tracked over time. For this, the \ac{OPM}\footnote{https://w3c-lbd-cg.github.io/opm/} \citep{Rasmussen2018a} is deemed relevant. The specific classes and properties it provides for this work are summarized in \autoref{OPM}. To illustrate the usage of these ontologies to answer competency question 2, a direct semantic extension is made to the \texttt{bot:Space}, \texttt{<Office\_204>}. First, it is defined as a \texttt{sosa:FeatureOfInterest} having two measurable properties; \texttt{<Office\_204\#temperature>} and \texttt{<Office\_204\#humidity>}, both defined via the relation \texttt{ssn:hasProperty}. To stay complaint with OPM and satisfy competency question 2, both properties are required to have atleast one \texttt{opm:hasPropertyState} relation for assigning states to the properties. A property state in \ac{OPM} is an evaluation that contains the value and metadata of a property deemed true at a specific point in time. \ac{OPM} also specifies that as a minimum, a property state should have a value and preferably, a generation time, an assignment that can respectively be done via the properties; \texttt{schema:value}, from \url{schema.org}\footnote{https://schema.org/value} and \texttt{prov:generatedAtTime}, from the Provenance Ontology\footnote{https://www.w3.org/TR/prov-o/}. \texttt{<Office\_204>} is further defined to have two elements which are both walls. One wall, \texttt{<Office\_204/east>}, is located on the eastern side of the room and the other wall, \texttt{<Office\_204/south>}, on the southern side. Each of them is described as both a \texttt{sosa:FeatureOfInterest} and a \texttt{sosa:Platform}. The latter simply means that each of the walls hosts another entity, in this case, a \texttt{<NodeMCU>} \ac{PCB} that is also a \texttt{sosa:Platform} hosting a DHT22 temperature and humidity sensor. Because the temperature and humidity properties are defined on the \texttt{<Office\_204>} entity, but are implicitly being measured from the interior walls \texttt{<Office\_204/east>} and \texttt{<Office\_204/south>} via the embedded sensors, it is necessary to describe each wall as a \texttt{sosa:Sample}\footnote{https://www.w3.org/TR/vocab-ssn/\#SOSASample}. A more intuitive graphical description of this data modelling process is provided in figure \ref{SSN_OPM_SEAS} together with its Turtle serialization in \autoref{lst:SSN_OPM_SEASttl}. Another ontology that can be adopted for explicit definition of complex functionality of smart appliances and their controllability, is \ac{SAREF}\footnote{https://saref.etsi.org/} \citep{Daniele2015}. The starting point of the \ac{SAREF} vocabulary is a device. Currently, much of the semantic vocabulary for describing device controllability has been availed by the \ac{SEAS}, \ac{SSN} \ac{SOSA} and \ac{BOT} however, should the need arise for more explicit descriptions of systems and their energy consumption behaviour, \ac{SAREF} extensions can be adopted.  
+\begin{table}[!h]
+	\centering
+        \caption{SEAS classes and properties adopted for this work's data model}
+	\begin{tabular}{l|l}
+		\hline \hline
+		Classes & Properties  \bigstrut \\ \hline
+		\texttt{seas:ElectricPowerSystem} & \texttt{seas:isPoweredBy}  \bigstrut \\
+		\texttt{seas:TemperatureEvaluation} & \texttt{seas:optimizes}  \bigstrut \\
+		\texttt{seas:AgentComfortEvaluation} & \texttt{seas:thermalTransmittance}  \bigstrut \\
+		\texttt{seas:MaximumComfortableEvaluation} & \texttt{seas:relativeToAgent} \bigstrut \\
+		\texttt{seas:MinimumComfortableEvaluation} & \texttt{seas:evaluatedSimpleValue} \bigstrut \\
+		\texttt{seas:Battery} & \texttt{seas:hasTemporalContext} \bigstrut \\
+	\end{tabular}
+	\label{SEAS}
+\end{table}
+
+\begin{table}[!h]
+	\centering
+        \caption{OPM classes and properties adopted for this work's data model}
+	\begin{tabular}{l|l}
+		\hline \hline
+		Classes & Properties  \bigstrut \\ \hline
+		\texttt{opm:Assumed} & \texttt{opm:hasPropertyState}  \bigstrut \\
+		\texttt{opm:CurrentPropertyState} & \bigstrut \\
+		\texttt{opm:PropertyState} & \bigstrut \\
+		\texttt{opm:Confirmed} & \bigstrut \\
+		\texttt{opm:OutdatedPropertyState} & \bigstrut \\
+		\texttt{opm:Deleted} & \bigstrut \\
+		
+	\end{tabular}
+	\label{OPM}
+\end{table}
+\end{enumerate}
+
+\begin{lstlisting}[language=N3, caption={Turtle serialization of the information modelled in figure \ref{SSN_OPM_SEAS}.}, label=lst:SSN_OPM_SEASttl]
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix bot: <https://w3id.org/bot#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix cdt:   <http://w3id.org/lindt/custom_datatypes#> .
+@prefix schema: <http://schema.org/>.
+@prefix sosa: <http://www.w3.org/ns/sosa/> .
+@prefix ssn: <http://www.w3.org/ns/ssn/> .
+@prefix seas: <https://w3id.org/seas/> .
+@prefix opm: <https://w3id.org/opm#> .
+@prefix prov:  <http://www.w3.org/ns/prov#> .
+
+# Office_204 (FOI) hosts some 2 walls at the east and south that will host 
+# some sensors. The space also has two properties temperature and humidity
+<Office_204> a sosa:FeatureOfInterest ;
+  bot:containsElement <Office_204/east>, <Office_204/south> ;
+  ssn:hasProperty <Office_204#temperature> , <Office_204#humidity> .
+
+# Office_204 east side wall to host a NodeMCU board with 
+# a DHT22 temp and  hum sensor.  
+<Office_204/east> a sosa:FeatureOfInterest , sosa:Sample , sosa:Platform ;
+  sosa:hosts <NodeMCU_1> .
+  
+# Office_204 south side wall to host a NodeMCU board with a DHT22 temp and 
+# hum sensor.                
+<Office_204/south> a sosa:FeatureOfInterest , sosa:Sample , sosa:Platform ;
+  sosa:hosts <NodeMCU_2> ;
+
+# DESCRIPTION OF PCB BOARDS HOSTING THE SENSORS
+##############################################################
+
+# NodeMCU 1 board hosted by the office_204 east side wall.
+<NodeMCU_1> a ssn:System , sosa:Platform ;
+  sosa:hosts <DHT22/01> ;
+  ssn:hasSubSystem <DHT22/01> .
+
+# NodeMCU 2 board hosted by the office_204 south side wall.
+<NodeMCU_2> a ssn:System , sosa:Platform ;
+  sosa:hosts <DHT22/02> ;
+  ssn:hasSubSystem <DHT22/02> .
+  
+# Assigning a state to the temperature property of Office #204   
+<Office_204#temperature> 
+  opm:hasPropertyState <Office_204#temperature_state_48906948_er8t78> .
+  
+# Assigning semantics to Office_204#temperature_state_48906948_er8t78 state
+<Office_204#temperature_state_48906948_er8t78> 
+  a opm:Confirmed , 
+    opm:CurrentPropertyState ;
+  schema:value "30.5 Cel"^^cdt:temperature ;
+  prov:generatedAtTime "2020-07-28T16:41:17.711+02:00"^^xsd:dateTime.
+
+# Assigning a state to the humidity property of Office #204  
+<Office_204#humidity> 
+  opm:hasPropertyState <Office_204#humidity_state_40039548_gktiy8> .
+  
+# Assigning semantics to Office_204#humidity_state_40039548_gktiy8 state
+<Office_204#humidity_state_40039548_gktiy8> 
+  a opm:Confirmed , 
+    opm:CurrentPropertyState ;
+  schema:value "85.0 %"^^cdt:ucum ;
+  prov:generatedAtTime "2020-07-28T16:41:17.711+02:00"^^xsd:dateTime. 
+\end{lstlisting}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=1\textwidth]{figures/SSN_OPM_SEAS.eps}
+    \caption{Using SSN/SOSA, OPM and SEAS ontologies to extend the semantic details of a building to encapsulate indoor zone information about sensors, elements contained within, their properties and state management ( simplistic view).} \label{SSN_OPM_SEAS}
+\end{figure}
+
+Below is a summary of the modular ontologies that have been adopted to solve the competency questions above;
+\begin{enumerate}
+    \item 
+    \textbf{\acf{BOT}\footnote{https://w3c-lbd-cg.github.io/bot/}}: \ac{BOT} \citep{Rasmussen2017} provides the foundation vocabulary necessary to model the core topological aspects of a building such as a site, a building, a storey, a space, and an element in a space. \ac{BOT} is chosen for its simplicity, modularity and extensibility.
+
+    \item 
+    \textbf{\acf{SSN}\footnote{https://www.w3.org/TR/vocab-ssn/} and \acf{SOSA}}: \ac{SSN} and its lightweight version \ac{SOSA} \citep{Haller2017} offer the vocabulary necessary to describe sensors and their observations.
+
+    \item
+    \textbf{\ac{SEAS}}: \ac{SEAS} \citep{Lefrancois2016} offers an ontology to describe smart appliances and their communication with the grid.
+
+    \item 
+    \textbf{\ac{OPM}}: \ac{OPM} \citep{Rasmussen2018a} provides a schema for describing temporal properties that are subject to changes as the building design evolves.
+
+    \item 
+    \textbf{SAREF (Smart Appliances REFerence)}: The \ac{SAREF} \citep{Daniele2015} suite of ontologies is a set of standardized frameworks designed to ensure that different \ac{IoT} solutions from various providers can work together seamlessly.
+\end{enumerate}
+
+\subsection{\ac{LBD} Model Validation for downstream \ac{KRL}}
+The potency of a \ac{KRL} model is tightly bound to the quality of the input data (knowledge graph) at its disposal. Factors such as data integrity, consistency, density, noise level, completeness, redundancy, and structural regularities in the knowledge graph can significantly influence the quality of what the model learns (the resultant embeddings), potentially affecting the building's downstream operational behavior. This research uses \ac{SHACL}\footnote{https://www.w3.org/TR/shacl/} to illustrate the procedures for validating a \ac{BIM-KG} against specific quality criteria. Simultaneously, \ac{SPARQL}\footnote{https://www.w3.org/TR/sparql11-query/} is employed for its data extraction and manipulation capabilities, facilitating cleanup and transformation tasks on the \ac{BIM-KG} whenever issues are identified. Before detailing the validation process, an outline of the important \ac{BIM-KG} issues to check for is provided below. 
+
+\begin{enumerate}
+    \item 
+    \textbf{Structural Consistency}: Because \ac{KRL} relies on message-passing, any structural irregularities in the \ac{BIM-KG} can disrupt the learning process and impact the quality of the resulting embeddings. Irregularities can arise from inconsistent or incomplete data entry in the underlying \ac{BIM} model. For example, if a \ac{BIM-KG} contains the following triples: 
+    \texttt{<Office\_204>} $\xrightarrow{\text{bot:containsElement}}$ \texttt{<NodeMCU\_1>}, \texttt{<Building\_UNM>} $\xrightarrow{\text{bot:hasSpace}}$ \texttt{<Office\_204>},
+    \texttt{<Building\_UNM>} $\xrightarrow{\text{bot:hasSpace}}$ \texttt{<Office\_204>}, \texttt{<Building\_UNM>} $\xrightarrow{\text{bot:hasSpace}}$ \texttt{<NodeMCU\_1>}, the inferred knowledge `\texttt{<Building\_UNM>} $\xrightarrow{\text{bot:containsElement}}$ \texttt{<NodeMCU\_1>}' contradicts the logical expression of the third triple. Using \ac{SHACL}, specific constraints can be defined to dictate the acceptable configurations for nodes and relationships in the \ac{BIM-KG}. In addition, \ac{SPARQL} can be leveraged to query the \ac{BIM-KG} and identify any deviations from the enforced \ac{SHACL} shapes and corrective actions are taken using \ac{SPARQL}'s \ac{CRUD} operations.
+
+    \begin{figure}
+        \centering
+        \includegraphics[width=0.8\textwidth]{figures/inconsistent-kg.eps}
+        \caption{Example of inconsistent knowledge in a \ac{BIM-KG}} \label{INCONSISTENT-KG}
+    \end{figure}
+
+    \item 
+    \textbf{Data Completeness}: In the context of this thesis, data completeness refers to how well a \ac{BIM-KG} covers the relevant domain knowledge i.e., the proportion of existing data to the total data required for a specific problem. Data completeness is a multi-faceted problem encompassing several dimensions such as accuracy, timeliness, relevancy, objectivity, and believability etc. What constitutes `complete' data can vary depending on the application or use case, meaning that different situations may have different requirements for what makes data complete. For an indoor environment control task, the instance \texttt{<Office\_204>} might suffer from a data completeness problem if its measurable properties, \texttt{<Office\_204\#temperature>} and \texttt{<Office\_204\#humidity>}, are absent in the \ac{BIM-KG}, whereas this would not be of concern for a cost estimation use case.  When a \ac{KRL} model is trained on such incomplete data, its resultant embeddings miss out on potentially important contextual information, leading to inaccurate downstream inferences and analyses. \cite{Zaveri2016QualitySurvey} reviewed several quality assessment approaches for Linked Data and categorized knowledge graph completeness into four classes: schema completeness, property completeness, population completeness and inter-linking completeness. This thesis does not go into the details of these classes, however, \cite{Zaveri2016QualitySurvey}'s work, is a starting point for other researchers in the \ac{AEC/FM} domain to investigate data completeness issues that are specific to \acp{BIM-KG}.
+
+    \item 
+    \textbf{Redundancy}: Redundancy occurs when multiple nodes in a \ac{BIM-KG} hold the same type of information but are labeled with different names or identifiers. A hypothetical example with intentional redundancy would be a particular space, say \texttt{<Office\_204>}, being represented by two different properties in the same dataset, such as \texttt{http://example.org/spaceID} and \texttt{http://example.org/name}. This redundancy (\texttt{spaceID} and \texttt{name} ) can ideally be solved by merging the two properties and keeping only one unique identifier. Property or entity duplication in a \ac{BIM-KG} can misguide a \ac{KRL} model's message-passing process resulting in malformed embeddings.
+\end{enumerate}
+
+\noindent The list above is non-exhaustive only intends to provide a starting point for other researchers to investigate other important \ac{BIM-KG} issues to check for before performing downstream \ac{KRL} tasks. To illustrate the validation process for the \ac{BIM-KG} discussed in \autoref{sec: linked building data modeling}, the requirements below are utilized. It is important to note that these requirements are typically defined by a domain expert for a specific use case. 
+
+\begin{enumerate}
+    \item 
+    Every \texttt{sosa:FeatureOfInterest} has to host at least one \texttt{ssn:System}.
+
+    \item 
+    Every \texttt{ssn:System} has to host at least one \texttt{sosa:Sensor}.
+
+    \item 
+    Every \texttt{ssn:Property} has to have an associated \texttt{opm:PropertyState}.
+
+    \item 
+    Every \texttt{opm:CurrentPropertyState} has a defined value (\texttt{schema:value}) and a timestamp (\texttt{prov:generatedAtTime}).
+\end{enumerate}
+ 
+\noindent To check these conditions, validations that are rooted in \ac{SPARQL} and \ac{SHACL} are adopted. First, \ac{SPARQL} \texttt{ASK} queries are provided for each condition, which return either true if the condition is violated, or false if the data meets the condition (see \autoref{lst:validation1} - \autoref{lst:validation4}):
+
+\begin{enumerate}
+\item 
+\texttt{sosa:FeatureOfInterest} hosts at least one \texttt{ssn:System}:
+
+\begin{lstlisting}[language=N3, caption={This query returns true if there exists at least one \texttt{sosa:FeatureOfInterest} that does not host any \texttt{ssn:System}.}, label=lst:validation1]
+PREFIX ssn: <http://www.w3.org/ns/ssn/>.
+PREFIX sosa: <http://www.w3.org/ns/sosa/>.
+
+ASK WHERE {
+  ?foi a sosa:FeatureOfInterest .
+  FILTER NOT EXISTS { 
+      ?foi sosa:hosts ?system . 
+      ?system a ssn:System . 
+  }
+}
+\end{lstlisting}
+
+\item 
+Every \texttt{ssn:System} hosts at least one sensor:
+\begin{lstlisting}[language=N3, caption={This query returns \texttt{true} if there exists at least one \texttt{ssn:System} that does not host any \texttt{sosa:sensor}}, label=lst:validation2]
+PREFIX ssn: <http://www.w3.org/ns/ssn/>.
+PREFIX sosa: <http://www.w3.org/ns/sosa/>.
+
+ASK WHERE {
+  ?system a ssn:System .
+  FILTER NOT EXISTS {
+    ?system sosa:hosts ?sensor
+    ?sensor a sosa:Sensor
+  }
+}
+\end{lstlisting}
+
+\item 
+Every \texttt{ssn:Property} has an associated state:
+\begin{lstlisting}[language=N3, caption={This query returns \texttt{true} if there exists at least one \texttt{ssn:Property} that has no property state}, label=lst:validation3]
+PREFIX ssn: <http://www.w3.org/ns/ssn/>.
+PREFIX sosa: <http://www.w3.org/ns/sosa/>.
+PREFIX opm: <https://w3id.org/opm#>.
+
+ASK WHERE {
+  ?property a ssn:Property .
+  FILTER NOT EXISTS {
+    ?property opm:hasPropertyState ?state
+  }
+}
+
+\end{lstlisting}
+
+\item 
+Every \texttt{opm:CurrentPropertyState} has a defined value and a timestamp:
+\begin{lstlisting}[language=N3, caption={This query returns \texttt{true} if there exists at least one \texttt{opm:CurrentPropertyState} that does not have either a \texttt{schema:value} or \texttt{prov:generatedAtTime} property.}, label=lst:validation4]
+PREFIX opm: <https://w3id.org/opm#>.
+PREFIX schema: <http://schema.org/>.
+PREFIX prov:  <http://www.w3.org/ns/prov#>.
+
+ASK WHERE {
+  ?state a opm:CurrentPropertyState .
+  FILTER NOT EXISTS { ?state schema:value ?value }
+  FILTER NOT EXISTS { ?state prov:generatedAtTime ?time }
+}
+\end{lstlisting}
+
+\end{enumerate}
+
+\noindent \ac{SHACL} is more expressive and capable of defining more complex constraints than \ac{SPARQL} alone as shown in \autoref{lst:shacl} below.
+
+\begin{lstlisting}[language=N3, caption={\ac{SHACL} shapes to express the same constraints defined in listings \ref{lst:validation1} - \ref{lst:validation4}}, label=lst:shacl]
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix schema: <http://schema.org/>.
+@prefix sosa: <http://www.w3.org/ns/sosa/> .
+@prefix ssn: <http://www.w3.org/ns/ssn/> .
+@prefix opm: <https://w3id.org/opm#> .
+
+# Shape for FeatureOfInterest
+:FeatureOfInterestShape
+    a sh:NodeShape ;
+    sh:targetClass sosa:FeatureOfInterest ;
+    sh:property [
+        sh:path sosa:hosts ;
+        sh:class ssn:System ;
+        sh:minCount 1 ;
+        sh:message "A FeatureOfInterest must host at least one System."
+    ] .
+
+# Shape for System
+:SystemShape
+    a sh:NodeShape ;
+    sh:targetClass ssn:System ;
+    sh:property [
+        sh:path sosa:hosts ;
+        sh:minCount 1 ;
+        sh:message "A System must host at least one sensor."
+    ] .
+
+# Shape for Property
+:PropertyShape
+    a sh:NodeShape ;
+    sh:targetClass ssn:Property ;
+    sh:property [
+        sh:path opm:hasPropertyState ;
+        sh:minCount 1 ;
+        sh:message "A Property must have an associated state."
+    ] .
+
+# Shape for CurrentPropertyState
+:CurrentPropertyStateShape
+    a sh:NodeShape ;
+    sh:targetClass opm:CurrentPropertyState ;
+    sh:property [
+        sh:path schema:value ;
+        sh:minCount 1 ;
+        sh:message "A CurrentPropertyState must have a defined value."
+    ] ;
+    sh:property [
+        sh:path prov:generatedAtTime ;
+        sh:datatype xsd:dateTime ;
+        sh:minCount 1 ;
+        sh:message "A CurrentPropertyState must have a timestamp."
+    ] .
+
+\end{lstlisting}
+
+\noindent In the above \ac{SHACL} shapes graph, each \texttt{sh:NodeShape} defines the shape for a specific class of nodes, e.g., \texttt{sosa:FeatureOfInterest}, \texttt{ssn:System}, \texttt{ssn:Property}, and \texttt{opm:CurrentPropertyState}. For each shape, \texttt{ sh:property} is used to specify constraints for the properties of the nodes that conform to the shape.
+For instance, in \texttt{:FeatureOfInterestShape}, the \texttt{sh:property} construct requires that each \texttt{sosa:FeatureOfInterest} must host (\texttt{sosa:hosts}) at least one (\texttt{sh:minCount 1}) \texttt{ssn:System}. Similarly, \texttt{:SystemShape} specifies that each \texttt{ssn:System} must host at least one sensor. The \texttt{sh:message} constructs are used to provide human-readable error messages that are displayed when a constraint is violated. In practice, \ac{SHACL} validation is performed using \texttt{pySHACL}\footnote{https://github.com/RDFLib/pySHACL}, a Python library developed by \texttt{RDFlib}\footnote{https://github.com/RDFLib/rdflib}. The high-level implementation details for this are shown in \autoref{lst:rdf-and-shapes-loading}.
+
+\begin{lstlisting}[language=python, caption={Python script for loading \ac{RDF} data and \ac{SHACL} shapes for validating a knowledge graph}, label=lst:rdf-and-shapes-loading]
+import rdflib
+from pyshacl import validate
+
+# Load RDF Data
+data_graph = rdflib.Graph()
+data_graph.parse("path_to_the_kg_data", format='turtle')
+
+# Load SHACL Shapes
+shapes_graph = rdflib.Graph()
+shapes_graph.parse("path_to_your_shacl_shapes", format='turtle')
+
+# Run the validation
+val = validate(data_graph, shacl_graph=shapes_graph)
+conforms, results_graph, results_text = val
+
+# Check if the data passed the SHACL validation
+if conforms:
+    print("The data graph passed SHACL validation!")
+else:
+    print("The data graph failed SHACL validation.")
+    print(results_text)
+
+\end{lstlisting}
+
+\subsection{Conclusion}
+This section provided a prototypical example for building a \ac{BIM-KG} for training \ac{KRL} models. Several existing \ac{AEC/FM} vocabularies (ontologies) were used instead of introducing new ones, a workflow that is strongly encouraged. Two approaches were presented to maintain the focus of the \ac{BIM-KG}'s scope to the task at hand: crafting competency questions as a proactive approach and using \texttt{SHACL} and \ac{SPARQL} for \ac{BIM-KG} validation as a reactive approach. To ensure that the modelled \ac{BIM-KG} is sufficient in the \ac{KRL} phase, three issues are discussed as important to check for: structural consistency, data completeness and redundancy. These issues are not exhaustive, but are a starting point for other researchers in the \ac{AEC/FM} domain to investigate the \ac{BIM-KG} modeling issues that could creep into the message-passing phase of \ac{KRL} models and strategies to mitigate them. 
+
+\section{Performance Analysis of \acf{KRL} on \acf{LBD}}\label{sec: relational-learning}
+% For \ac{KRL} to impact the \ac{AEC/FM} domain, this research emphasizes the critical importance of comprehensively reporting \ac{KRL} model architectures, training setups, hyperparameters, and dataset splits to enhance trust, reproducibility and understanding of \ac{KRL}-based methods among \ac{AEC/FM} stakeholders and researchers. 
+
+
+The section develops and formalizes a methodology for applying \ac{KRL} to \acp{BIM-KG} using performance analysis experiments. An overview of the models, datasets, and evaluation protocol used for the experiments is discuused herein.
+
+\subsection{Models}
+Several \ac{KRL} models have been introduced in \autoref{KRL models}, differentiated primarily by their score functions. For this research's experiments, five \ac{KRL} models were chosen: ComplEx, DistMult, RotatE, TransE and TransH. These models are well-regarded baseline techniques from the existing literature, cover a wide range of methodologies, and have been extensively investigated in the context of drug discovery \citep{Paliwal2020PreclinicalGraphs, Zheng2021PharmKG:Mining}, whose data structures closely mirror those of \acp{BIM-KG}.
+
+\begin{enumerate}
+    \item 
+    \textbf{TransE}: 
+    As discussed in \autoref{translation-based models}, TransE interprets relationships as translations between entities in the embedding space. Its scoring function assesses the plausibility of a triple $(h, r, t)$ by computing the distance between the head entity \(h\), the relationship \(r\), and the tail entity \(t\) in the embedding space, defined mathematically as:
+    
+    \begin{equation}
+        f(h, r, t) = ||h + r - t||_2
+    \end{equation}
+    
+    TransE is efficient and relatively easy to implement, making it a popular choice for many \ac{KRL} tasks. Although it has limitations in dealing with 1-to-N, N-to-1, and N-to-N relations, limiting its ability to capture the complexity and heterogeneity of relationships in \acp{BIM-KG}, its behaviour is investigated nonetheless. Again, the goal of these experiments is not to find the best \ac{KRL} model configuration but to expose and better understand the idiosyncracies arising from integrating different \ac{KRL} models with \acp{BIM-KG}.
+
+    % \begin{algorithm}
+    % \caption{Learning TransE}
+    % \textbf{Input:} Training set $\mathcal{S} = \{(h, \ell, t)\}$, entities and relation sets $E$ and $L$, margin $\gamma$, embedding dimension $k$. \\
+    % 1: \textbf{Initialize} $\ell \leftarrow \text{uniform}\left(-\frac{6}{\sqrt{k}}, \frac{6}{\sqrt{k}}\right)$ for each $\ell \in L$ \\
+    % 2: \hspace{2mm} $\ell \leftarrow \ell / \|\ell\|$ for each $\ell \in L$ \\
+    % 3: \hspace{2mm} $e \leftarrow \text{uniform}\left(-\frac{6}{\sqrt{k}}, \frac{6}{\sqrt{k}}\right)$ for each entity $e \in E$ \\
+    % 4: \textbf{Loop} \\
+    % 5: \hspace{2mm} $e \leftarrow e / \|e\|$ for each entity $e \in E$ \\
+    % 6: \hspace{2mm} $\mathcal{S}_{\text{batch}} \leftarrow \text{sample}(\mathcal{S}, b)$ // sample a minibatch of size $b$ \\
+    % 7: \hspace{2mm} $T_{\text{batch}} \leftarrow \emptyset$ // initialize the set of pairs of triplets \\
+    % 8: \hspace{2mm} \textbf{for} $(h, \ell, t) \in \mathcal{S}_{\text{batch}}$ \textbf{do} \\
+    % 9: \hspace{4mm} $(h', \ell, t') \leftarrow \text{sample}(\mathcal{S}'_{(h,\ell,t)})$ // sample a corrupted triplet \\
+    % 10: \hspace{4mm} $T_{\text{batch}} \leftarrow T_{\text{batch}} \cup \{((h, \ell, t), (h', \ell, t'))\}$ \\
+    % 11: \hspace{2mm} \textbf{end for} \\
+    % 12: \hspace{2mm} Update embeddings w.r.t.
+    % \[
+    % \sum_{((h, \ell, t),(h', \ell, t')) \in T_{\text{batch}}} \nabla \left[ \gamma + d(h + \ell, t) - d(h' + \ell, t') \right]_+
+    % \]
+    % \textbf{13:} \textbf{end loop}
+    % \end{algorithm}
+
+
+    \item 
+    \textbf{TransH}: Also discussed in \autoref{translation-based models} is TransH, a variant of TransE that supports heterogeneous relations using relationship-specific hyperplanes to capture the different transformations associated with different relations. The scoring function for TransH is defined as:
+    
+     \begin{equation}
+        f(h, r, t) = ||h_{\perp r} + r - t_{\perp r}||_2
+    \end{equation}
+    
+    where, $h_{\perp r}$ and $t_{\perp r}$ denote the projected representations of the head and tail entities onto the hyperplane associated with the relationship $r$.
+    
+    \item
+    \textbf{RotatE}: RotatE can model various relation patterns, such as symmetry, antisymmetry, inversion, and composition \citep{Sun2019RotatE:Space}. It defines each relation as a rotation from the source entity to the target entity in complex vector space. Given  complex embeddings for the head, relation, and tail entities \(h, r, t \in \mathbb{C}^k\), RotatE enforces that relation embeddings have a modulus of one, i.e., \(|r| = 1\). The scoring function is defined as:
+    
+    \begin{equation}
+    f(h, r, t) = -\| h \odot r - t \|_2
+    \end{equation}
+    
+    where \(\odot\) denotes the Hadamard product.
+
+    \item
+    \textbf{DistMult}: This model is a simplification of RESCAL \citep{Nickel2013TensorLearning} that restricts relation matrices to be diagonal \citep{Yang2014EmbeddingBases}. This greatly improves the model's computational efficiency but limits the its expressivity to learning only symmetric relations. For context, consider the \texttt{adjacentTo} relation from a hypothetical ontology. Two spaces (e.g., rooms, corridors) might be related by the \texttt{adjacentTo} relation, which is naturally symmetric i.e., if Room A is \texttt{adjacent to} Room B, then Room B is also \texttt{adjacentTo} Room A. Alternatively, antisymmetric relations are unidirectional for example larger spaces often contain smaller ones, but the reverse is not true. The score function used by DistMult to evaluate each triple is;
+    
+    \begin{equation}
+    f(h, r, t) = h^\top \text{diag}(r)t
+    \end{equation}
+
+    \item
+    \textbf{ComplexE}: ComplEx extends DistMult by leveraging complex-valued embeddings for both the entity and relation embeddings, such that a triple \( (h, r, t) \) is represented by a complex vector \( \textbf{h}, \textbf{r}, \textbf{t} \in \mathbb{C}^k \), where \( k \) is the dimensionality of the embedding space \citep{Trouillon2016ComplexPrediction}. The score function for ComplEx is defined as:
+
+    \begin{equation}
+    f(h, r, t) = \text{Re}\left(\sum_{i=1}^{k} h_i \cdot r_i \cdot \overline{t_i}\right)
+    \end{equation}
+    
+    where \( \text{Re}(\cdot) \) denotes the real part of the complex number, and \( \overline{t_i} \) represents the complex conjugate of the \( i \)-th component of the tail entity vector \( t \). By incorporating complex conjugates, ComplEx effectively models asymmetric relations \cite{}.
+\end{enumerate}
+
+\subsection{Datasets}
+In these experiments, two publicly available \acp{BIM-KG} were used. These datasets are representative examples of how the Brick ontology\footnote{https://brickschema.org/} can be used to model real buildings - Rice Hall at University of Virginia \citep{Balaji2016Brick:Buildings} and Soda Hall at University of Carlifonia, Berkeley \citep{Balaji2016Brick:Buildings}, as detailed in \autoref{BIM-KG-datasets} - \autoref{tab:Soda Hall Facts} and shown in \autoref{fig:buildings_modeled_by_BRICK}. Brick is an open-source initiative aimed at standardizing the semantic descriptions of physical, logical, and virtual assets in buildings and their inter-relationships. An illustrative example of a building modeled using Brick is shown in \autoref{brick-building}. In this example, an \ac{AHU} supplies conditioned air to a \ac{VAV} Box, which adjusts the airflow to an \ac{HVAC} zone that has two rooms. The \ac{HVAC} zone has a thermostat equipped with a temperature and carbon dioxide sensor. Additionally, these two rooms are part of a lighting zone, and the lights in this zone are controlled by the building's lighting controller. The two datasets used in this thesis' experiments closely mirror this example building's setup, but on a larger scale. For an in-depth discussion on the creation and evaluation of these datasets, please refer to \cite{Balaji2016Brick:Buildings} and \cite{Balaji2018BrickApplications}.
+
+\begin{figure}[t]
+        \centering      \includegraphics[width=0.5\textwidth]{figures/brick-building.png}
+        \caption{A simple example highlighting the components of a building modeled by the Brick schema at a minimum. Source \citep{Balaji2016Brick:Buildings}} \label{brick-building}
+\end{figure}
+
+\begin{table}[!ht]
+\centering
+\caption{\ac{BIM-KG} datasets used in the performance analysis experiments}
+\begin{tabular}{l|c|c|c|c}
+\hline \hline \textbf{\ac{BIM-KG} Dataset} & \textbf{$|\mathcal{E}|$} & \textbf{$|\mathcal{K}|$} & \textbf{$\mathcal{E}$} Types & \textbf{$\mathcal{R}$} Types \bigstrut \\
+\hline Rice Hall at University of Virginia & 810 & 1665 & 65 & 6 \\
+Soda Hall at University of California, Berkeley & 1738 & 3774 & 36 & 9 \bigstrut \\
+\hline
+\end{tabular}
+\label{BIM-KG-datasets}
+\end{table}
+
+\begin{table}[!ht]
+    \centering
+    \caption{Training dataset properties and structural patterns}
+    \begin{tabular}{c|c|c|c}
+    \hline \hline
+        \textbf{Dataset} & \textbf{Density} & \textbf{Entity Heterogeneity} & \textbf{Average Degree} \bigstrut \\
+        \hline
+        Rice Hall & 0.002 & 65 & 3.664 \\
+        
+        Soda Hall & 0.001 & 36 & 4.342 \\
+        \hline
+    \end{tabular}
+    \label{tab:BIM-KG-datasets_structural_patterns}
+\end{table}
+
+\begin{table}[!t]
+\centering
+\caption{Key Facts About Rice Hall, University of Virginia}
+\label{tab:Rice Hall Facts}
+\begin{tabular}{p{4cm}|p{10cm}}
+\hline \hline
+\textbf{Category}                & \textbf{Details}                                                                                  \bigstrut \\ \hline
+Building                & Rice Hall, University of Virginia                                                                     \bigstrut  \\ \hline
+Function                & Hosts the Computer Science Department                                                                \bigstrut   \\ \hline
+Size                    & 100,000+ square feet                                                                                 \bigstrut   \\ \hline
+Floors                  & 6                                                    \bigstrut   \\ \hline
+Construction Year       & 2011\bigstrut    \\ \hline
+Rooms                   & 120+ (faculty offices, teaching/research labs, study areas, conference rooms)                       \bigstrut    \\ \hline
+\ac{BMS}      & Contracted with Trane\footnote{https://www.trane.com/}                                                                              \bigstrut    \\ \hline
+HVAC System   & - 4 \acp{AHU} \newline - 30+ \acp{FCU} \newline - 120 \acp{VAV} 
+\newline - Low-temperature chilled beams \newline - Ice tank-based chilling towers \newline - Enthalpy wheel heat recovery system \newline - Thermal storage system
+
+            \bigstrut \\ \hline
+Lighting System    & - Motorized shades \newline - Abundant daylight sensors \newline - Motion sensors                        \\ \hline
+\end{tabular}
+\bigskip
+
+\caption{Key Facts About Soda Hall, UC Berkeley}
+\label{tab:Soda Hall Facts}
+
+\begin{tabular}{p{4cm}|p{10cm}}
+\hline \hline
+\textbf{Category}                & \textbf{Details}                                                                                     \bigstrut  \\ \hline
+Building               & Soda Hall, UC Berkeley                                                                               \bigstrut   \\ \hline
+Function                & Houses the Computer Science Department
+\bigstrut   \\ \hline
+Size                & 110,565+ square feet
+\bigstrut    \\ \hline
+Floors                  & 5                                                       \bigstrut   \\ \hline
+Construction Year       & 1994\bigstrut    \\ \hline
+Rooms                   & 200+ (small to medium-sized closed offices for faculty and graduate student groups)                       \bigstrut    \\ \hline
+\acf{BMS} & Provided by the now-defunct Barrington Systems; exposes only \ac{HVAC} sensors                  \bigstrut    \\ \hline
+\ac{HVAC} System              & - Pneumatic controls with 232 thermal zones. \newline - Periphery zones have \acp{VAV} with reheat \newline - Other zones without reheat. \newline - \acp{VAV} with reheat: Single control setpoint for both reheat and airflow using proprietary value mapping mechanism.  \newline - Contains redundant chillers, condensers, and cooling towers
+\bigstrut   \\ \hline
+\end{tabular}
+\end{table}
+
+\begin{figure}
+    \centering
+    \begin{subfigure}[b]{1\textwidth}
+        \includegraphics[width=\textwidth]{figures/rice_hall.jpg}
+         \caption{Rice Hall at University of Virginia \newline (Source: \url{https://archello.com/project/university-of-virginia-rice-hall})}
+        \label{subfig:rice_hall}
+    \end{subfigure}
+    % Spacing between subfigures. Adjust as needed.
+    \hspace{0.05\textwidth}
+    \begin{subfigure}[b]{1\textwidth}
+        \includegraphics[width=\textwidth]{figures/Sodahall.jpeg}
+        \caption{Soda Hall at University of California, Berkeley \newline (Source: \url{https://www.berkeley.edu/map/soda-hall/})}
+               
+        \label{subfig:soda_hall}
+    \end{subfigure}
+    \caption{The two buildings modelled by BRICK and adopted for this thesis' \ac{KRL} performance analysis experiments}
+    \label{fig:buildings_modeled_by_BRICK}
+\end{figure}
+
+\subsection{Evaluation Protocol}
+
+The overarching goal of \ac{KRL} models is to learn entity and relation embeddings that capture the underlying structure and semantics of a knowledge graph. To learn reliable embeddings, a \ac{KRL} model needs to have the ability to distinguish between true facts and false facts in a knowledge graph. In reality, knowledge graphs are curated only with true facts yet both true and false facts are required for successful \ac{KRL} model training. Having only true facts forces the model to overfit to those facts and because the model never encounters negative facts, it develops a bias towards predicting only known facts. Inference tasks fail missing facts or when new ones are introduced.  As mentioned earlier, in the \ac{OWA}, a fact cannot be considered false just because it does not exist in a knowledge graph however, when considering the \ac{LCWA}, a constrained variation of the \ac{CWA}, a knowledge graph is only locally complete i.e., if a fact \texttt{Room\_A} $\xrightarrow{\text{ssn:hasProperty}}$ \texttt{Temperature} is missing from a \ac{BIM-KG}, \ac{LCWA} interprets \texttt{Room A} as not having a Temperature property, but only within the context of this specific \ac{BIM-KG}. With this assumption, a set of negative triples $\mathcal{C}$ can be generated by altering either the head or tail entity of each triple \( (h, r, t) \) in a knowledge graph as shown in \autoref{eq:corruption} below;
+
+\begin{equation}
+\label{eq:corruption}
+\mathcal{C} = \left\{(\hat{h}, r, t) \mid \hat{h} \in \mathcal{E}\right\} 
+\cup \left\{(h, r, \hat{t}) \mid \hat{t} \in \mathcal{E}\right\}
+\end{equation}
+
+\noindent where \( \mathcal{E} \) is the set of all entities in the knowledge graph while \( \hat{h} \) and \( \hat{t} \) are the corrupted head and tail entities respectively. For any given triple \( (h, r, t) \) in the test set $\mathcal{K}_{\text{test}} \subseteq \mathcal{K}$, the left hand side of \autoref{eq:corruption}, $\left\{(\hat{h}, r, t) \mid \hat{h} \in \mathcal{E}\right\}$ corrupts the head entity \( h \) by replacing it with any other entity \( \hat{h} \) from the set \( \mathcal{E} \), creating triples of the form \( (\hat{h}, r, t) \) where \( \hat{h} \) is not the original head entity. Similarly $\left\{(h, r, \hat{t}) \mid \hat{t} \in \mathcal{E}\right\}$, corrupts the tail entity by replacing \( t \) with any other entity \(\hat{t} \in \mathcal{E}\), resulting in triples of the form \( (h, r, \hat{t}) \) where \( \hat{t} \) is not the original tail entity. To visualize this process better, consider a set of 5 entities \( \mathcal{E} = \{ \texttt{Space}, \texttt{Sensor}, \texttt{Site}, \texttt{Storey}, \texttt{Temperature} \} \) and a set of 2 relations \( \mathcal{R} = \{ \text{bot:hasElement}, \texttt{bot:adjascentElement} \} \). Given a triple, \texttt{Space} $\xrightarrow{\text{bot:hasElement}}$ \texttt{Sensor}, the corruption set \( \mathcal{C} \) below can be generated by replacing either the head or tail with entities from \( \mathcal{E} \). The first two rows hold corruptions where the tail has been replaced with \texttt{Site} and \texttt{Temperature}, respectively, while the last two rows hold corruptions where the head has been replaced with \texttt{Site} and \texttt{Storey}, respectively. 
+
+\[
+\mathcal{C} = 
+\left[\begin{array}{ccc}
+
+\textbf{Subject} & \textbf{Relation} & \textbf{Object} \\
+\hline
+\texttt{Space} & \texttt{bot:hasElement} & \texttt{Site} \\ 
+\texttt{Space} & \texttt{bot:hasElement} & \texttt{Temperature} \\ 
+\texttt{Site} & \texttt{bot:hasElement} & \texttt{Sensor} \\ 
+\texttt{Storey} & \texttt{bot:hasElement} & \texttt{Sensor} \\ 
+\end{array}\right]
+\]
+
+\noindent It is possible for some of the generated synthetic negatives to actually be true positives (already existing in $\mathcal{K}$). Whenever these are encountered in this work, they are removed from $\mathcal{K}$ using the filtered evaluation setting in \citep{Bordes2013} and \citep{Ali2020BringingFramework}, as their presence can skew the training results. Generally, \ac{KRL} is framed as a learning-to-rank problem with model evaluation typically based on how well the model ranks a holdout set of triples from the original graph by giving higher scores to true facts than corrupted triples. When multiple triples in $\mathcal{K}_{\text{test}}$ receive the same ranking score, this work resolves such ties by taking the mean of the optimistic (the true triple is ranked highest of all those with equal score) and pessimistic rank (the true triple is ranked last of all those with equal score).
+Regarding performance metrics, this work adopts three commonly used ones namely; \acf{MRR}, Hits@K and \acf{AMR}. These are briefly defined below, however, for a more detailed narrative and discussion, reference is made to \citep{Ali2020BringingFramework}
+
+\begin{enumerate}
+    \item 
+    \textbf{\ac{MRR}}: \ac{MRR} evaluates the effectiveness of information retrieval systems by calculating the average of the reciprocal ranks of the first relevant result for each query in a set of queries \( Q \). In simpler terms, for each query, you look at the rank position of the first correct answer, take the reciprocal of that rank, and then average those values across all queries. This provides a measure of how quickly the system finds the correct answer for queries. Mathematically, \ac{MRR} is defined as:
+    
+    \begin{equation}
+    \label{eq:mrr}
+    \text{MRR} = \frac{1}{|Q|} \sum_{i=1}^{|Q|} \frac{1}{\text{rank}_i}
+    \end{equation}
+    
+    where \(\text{rank}_i\) is the rank of the true triple for the \(i\)-th query. For better intuition, imagine a \ac{BMS} that tries to answer some arbitrary building automation queries Q1, Q2 and Q3. For each query, the \ac{BMS} makes three guesses with the first one being the one it thinks is most likely correct as shown in \autoref{tab:MRR-example} (the actual correct triple is marked with a \quad \checkmark). \ac{MRR} ranges from 0 to 1, with 1 indicating that all true triples are ranked first while 0 shows that none of the proposed results are correct. The \ac{MRR} for the \ac{BMS} is therefore calculated as $\frac{\frac{1}{3} + \frac{1}{2} + \frac{1}{2}}{3} \approx 0.44$ using \autoref{eq:mrr}
+\begin{table}[]
+    \centering
+    \begin{tabular}{l|l|c|c}
+    \hline \hline
+    \textbf{Query} & \textbf{Proposed Results} & \textbf{Rank} & \textbf{Reciprocal Rank} \bigstrut \\
+    \hline
+    Q1 & 
+    \begin{tabular}{@{}l@{}}
+    \texttt{Room101} $\xrightarrow{\text{hasSensor}}$ \texttt{TempSensorA}, \\
+    \texttt{Room101} $\xrightarrow{\text{isPartOf}}$ \texttt{BuildingB}, \\
+    \textbf{\texttt{Room101} $\xrightarrow{\text{isPartOf}}$ \texttt{BuildingA}} \quad \checkmark
+    \end{tabular} & 3 & $\frac{1}{3}$ \\
+    \hline
+    Q2 & 
+    \begin{tabular}{@{}l@{}}
+    \texttt{HVAC1} $\xrightarrow{\text{connectedTo}}$ \texttt{HVAC2}, \\
+    \textbf{\texttt{HVAC1} $\xrightarrow{\text{serves}}$ \texttt{ZoneA}} \quad \checkmark, \\
+    \texttt{HVAC1} $\xrightarrow{\text{hasPart}}$ \texttt{FanA} 
+    \end{tabular} & 2 & $\frac{1}{2}$ \\
+    \hline
+    Q3 & 
+    \begin{tabular}{@{}l@{}}
+    \texttt{Light1} $\xrightarrow{\text{installedIn}}$ \texttt{Room101}, \\
+    \textbf{\texttt{Light1} $\xrightarrow{\text{controlledBy}}$ \texttt{ControlSystemA}} \quad \checkmark, \\
+    \texttt{Light1} $\xrightarrow{\text{hasSwitch}}$ \texttt{SwitchB}
+    \end{tabular} & 2 & $\frac{1}{2}$ \\
+    \hline
+    \end{tabular}
+    \caption{Ficticious reponses of an illustrative \ac{BMS} to 3 arbitrary queries and their reciprocal rank values. The correct response is marked with a \quad \checkmark}.
+    \label{tab:MRR-example}
+\end{table}
+
+\item 
+\textbf{Hits@\texttt{K}}: This metric measures the accuracy of a retrieval system by checking whether the correct answer is within the top \texttt{K} ranked results. Mathematically this is defined using the formula below
+
+\begin{equation}
+    \text{Hits@\texttt{K}} = \frac{1}{|Q|} \sum_{i=1}^{|Q|} \mathbf{1}(\text{rank}_i \leq \texttt{K})
+\end{equation}
+
+where \(\mathbf{1}(\text{rank}_i \leq K)\) is an indicator function that equals 1 if the true triple's rank is within the top \texttt{K}, and 0 otherwise. Hits@1, Hits@3, and Hits@10 are commonly used variations of this metric. Using the example in \autoref{tab:MRR-example}, hits@1 = $\frac{0}{3} = 0$, hits@3 = $\frac{3}{3} = 1$, hits@10 = $\frac{3}{3} = 1$ (the denominator for all being the 3 true existing facts, while the numerator is the number of correct facts appearing within the top \texttt{K}.  
+
+\item 
+\textbf{\ac{AMR}}: This metric complements \ac{MRR} and Hits@\texttt{K} metrics and has been shown to provide more fair comparisons between datasets of different sizes \citep{Berrendorf2020OnMethods}. Mathematically \ac{AMR} is defined in \autoref{eq:amr} as the ratio of the mean rank to its expected value;
+
+\begin{equation}
+\label{eq:amr}
+\text{AMR} = \frac{\text{Mean Rank (MR)}}{\text{Expected Mean Rank (EMR)}}
+\end{equation}
+
+\end{enumerate}
+
+\subsection{Implementation details}
+All experiments were performed on a single Macbook Pro with an  Apple M1 Pro chip and 16GB RAM using PyKEEN \citep{Ali2020PyKEENEmbeddings}, a python-based library for \ac{KRL} built on top of PyTorch while hyperparameter optimizations were handled using Optuna \citep{Akiba2019Optuna:Framework}. The exact software versions are kept consistent and delineated in the source code attached to this thesis.

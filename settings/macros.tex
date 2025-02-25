@@ -1,0 +1,61 @@
+%% my macros
+\newcommand{\imp}[1]{\underline{\textit{#1}}}
+\newcommand{\Autoref}[1]{%
+	\begingroup%
+	\def\chapterautorefname{Chapter}%
+	\def\sectionautorefname{Section}%
+	\def\subsectionautorefname{Subsection}%
+	\def\figureautorefname{Figure}%
+	\def\tableautorefname{Table}%
+	\def\lstlistingautorefname{Listing}%
+	\autoref{#1}%
+	\endgroup%
+}
+\renewcommand*{\figureautorefname}{figure}
+\renewcommand*{\tableautorefname}{table}
+\renewcommand*{\lstlistingname}{listing}
+
+
+%% Text Font
+% \renewcommand{\familydefault}{\rmdefault}
+% \renewcommand{\rmdefault}{ptm}
+
+%% Text formats
+\newcommand{\tbi}[1]{\textbf{\textit{#1}}}
+
+%% Declaring math operators for argmax and argmix
+\DeclareMathOperator*{\argmax}{arg\,max}
+\DeclareMathOperator*{\argmin}{arg\,min}
+
+% todo highlights
+\newcommandx{\addCite}[2][1=]{\todo[size=\tiny, linecolor=green,backgroundcolor=yellow!25,bordercolor=yellow,#1]{#2}}
+\newcommandx{\addContent}[2][1=]{\todo[inline,linecolor=green,backgroundcolor=green!25,bordercolor=green,#1]{#2}}
+\newcommandx{\reviseContent}[2][1=]{\todo[inline,linecolor=red,backgroundcolor=red!25,bordercolor=yellow,#1]{#2}}
+
+%% Math fonts
+\newcommand{\bbA}{\mathbb{A}}
+\newcommand{\bbB}{\mathbb{B}}
+\newcommand{\bbC}{\mathbb{C}}
+\newcommand{\bbD}{\mathbb{D}}
+\newcommand{\bbE}{\mathbb{E}}
+\newcommand{\bbF}{\mathbb{F}}
+\newcommand{\bbG}{\mathbb{G}}
+\newcommand{\bbH}{\mathbb{H}}
+\newcommand{\bbI}{\mathbb{I}}
+\newcommand{\bbJ}{\mathbb{J}}
+\newcommand{\bbK}{\mathbb{K}}
+\newcommand{\bbL}{\mathbb{L}}
+\newcommand{\bbM}{\mathbb{M}}
+\newcommand{\bbN}{\mathbb{N}}
+\newcommand{\bbO}{\mathbb{O}}
+\newcommand{\bbP}{\mathbb{P}}
+\newcommand{\bbQ}{\mathbb{Q}}
+\newcommand{\bbR}{\mathbb{R}}
+\newcommand{\bbS}{\mathbb{S}}
+\newcommand{\bbT}{\mathbb{T}}
+\newcommand{\bbU}{\mathbb{U}}
+\newcommand{\bbV}{\mathbb{V}}
+\newcommand{\bbW}{\mathbb{W}}
+\newcommand{\bbX}{\mathbb{X}}
+\newcommand{\bbY}{\mathbb{Y}}
+\newcommand{\bbZ}{\mathbb{Z}}

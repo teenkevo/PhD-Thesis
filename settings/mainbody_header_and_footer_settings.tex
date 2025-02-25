@@ -1,0 +1,13 @@
+\pagestyle{fancy}
+
+\renewcommand{\chaptermark}[1]{%
+\markboth{\chaptername
+\ \thechapter.\ #1}{}}
+
+\renewcommand{\sectionmark}[1]{\markright{\thesection.\ #1}}
+
+\fancyhf{}
+\fancyhead[RE]{\textit{\leftmark}}
+\fancyhead[LE]{\textit{\thepage}}
+\fancyhead[LO]{\textit{\rightmark}}
+\fancyhead[RO]{\textit{\thepage}}
