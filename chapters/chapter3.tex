@@ -599,8 +599,13 @@ The overarching goal of \ac{KRL} models is to learn entity and relation embeddin
 \end{array}\right]
 \]
 
-\noindent It is possible for some of the generated synthetic negatives to actually be true positives (already existing in $\mathcal{K}$). Whenever these are encountered in this work, they are removed from $\mathcal{K}$ using the filtered evaluation setting in \citep{Bordes2013} and \citep{Ali2020BringingFramework}, as their presence can skew the training results. Generally, \ac{KRL} is framed as a learning-to-rank problem with model evaluation typically based on how well the model ranks a holdout set of triples from the original graph by giving higher scores to true facts than corrupted triples. When multiple triples in $\mathcal{K}_{\text{test}}$ receive the same ranking score, this work resolves such ties by taking the mean of the optimistic (the true triple is ranked highest of all those with equal score) and pessimistic rank (the true triple is ranked last of all those with equal score).
-Regarding performance metrics, this work adopts three commonly used ones namely; \acf{MRR}, Hits@K and \acf{AMR}. These are briefly defined below, however, for a more detailed narrative and discussion, reference is made to \citep{Ali2020BringingFramework}
+\noindent It is possible for some of the generated synthetic negatives to actually be true positives (already existing in $\mathcal{K}$). Whenever these are encountered in this work, they are removed from $\mathcal{K}$ using the filtered evaluation setting in \citep{Bordes2013} and \citep{Ali2020BringingFramework}, as their presence can skew the training results. 
+
+\ac{KRL} treats link prediction as a \emph{learning-to-rank} problem. In this paradigm and for the rest of this thesis, a \emph{query} \( Q \) takes the form of a partially known triple such as \((h, r, ?)\), where the head entity \((h)\) and the relation \((r)\) are given, but the \emph{tail} \((?)\) is unknown. The model must then assign scores to a set of candidate tails, ranking the correct entity \emph{higher} than incorrect (or corrupted) alternatives. For instance, given a true triple \texttt{RoomA} $\xrightarrow{\text{ssn:hasProperty}}$ \texttt{Temperature} in a \ac{BIM-KG}, the query \texttt{RoomA} $\xrightarrow{\text{ssn:hasProperty}}$ \texttt{?} is answered by scoring every possible tail in the knowledge graph and ranking them. A well-trained model places \texttt{Temperature} near the top, while all corrupted versions---such as \texttt{RoomA} $\xrightarrow{\text{ssn:hasProperty}}$ \texttt{RoomB}---receive lower scores. The \emph{loss function} typically enforces this ranking objective. A common approach is a \emph{margin-based ranking loss}, where the model is penalized if a true triple's score is not sufficiently higher than its corresponding corrupted triple. Formally, for a true triple \(\bigl(h, r, t\bigr)\) and its corrupted counterpart \(\bigl(h', r, t'\bigr)\), the margin-based loss might look like:
+\[
+\mathcal{L} \;=\; \sum_{\substack{(h,r,t) \in \mathcal{P} \\ (h',r,t') \in \mathcal{C}}} \max\Bigl(0,\;\gamma \;+\; f\bigl(h',r,t'\bigr) \;-\; f\bigl(h,r,t\bigr)\Bigr),
+\]
+where \(f(\cdot)\) is the model's scoring function, \(\gamma\) is a margin, \(\mathcal{P}\) denotes the set of positive (true) triples, and \(\mathcal{C}\) the corrupted (negative) triples. This loss drives the model to \emph{rank} the true triple higher than any false candidate by a margin of \(\gamma\). Consequently, when evaluating on a holdout set \(\mathcal{K}_{\text{test}}\) , a well-performing model will \emph{score} (and thereby rank) the correct triple higher than any corrupted variation---leading to meaningful \acf{MR} or \acf{MRR} metrics that reflect the model's ability to discern true facts from false ones. When multiple triples in the test set, $\mathcal{K}_{\text{test}}$, receive the same score, this work resolves such ties by computing the \emph{mean} of the optimistic and pessimistic rankings. Concretely, in the \emph{optimistic} scenario, the true triple is assumed to occupy the \emph{top} position among all those with equal scores, whereas in the \emph{pessimistic} scenario, it is ranked \emph{last} among them. The final rank is the arithmetic mean of these two extremes, thereby providing a fair tie-break mechanism that avoids inflating or deflating the model’s performance metrics. Regarding performance metrics, as a starting point, this work adopts three commonly used ones namely; \acf{MRR}, Hits@K and \acf{AMR}. These are briefly defined below, however, for a more detailed narrative and discussion, reference is made to \citep{Ali2020BringingFramework}
 
 \begin{enumerate}
     \item 
@@ -611,7 +616,20 @@ Regarding performance metrics, this work adopts three commonly used ones namely;
     \text{MRR} = \frac{1}{|Q|} \sum_{i=1}^{|Q|} \frac{1}{\text{rank}_i}
     \end{equation}
     
-    where \(\text{rank}_i\) is the rank of the true triple for the \(i\)-th query. For better intuition, imagine a \ac{BMS} that tries to answer some arbitrary building automation queries Q1, Q2 and Q3. For each query, the \ac{BMS} makes three guesses with the first one being the one it thinks is most likely correct as shown in \autoref{tab:MRR-example} (the actual correct triple is marked with a \quad \checkmark). \ac{MRR} ranges from 0 to 1, with 1 indicating that all true triples are ranked first while 0 shows that none of the proposed results are correct. The \ac{MRR} for the \ac{BMS} is therefore calculated as $\frac{\frac{1}{3} + \frac{1}{2} + \frac{1}{2}}{3} \approx 0.44$ using \autoref{eq:mrr}
+    where \(\text{rank}_i\) is the rank of the true triple for the \(i\)-th query. For better intuition, imagine a \ac{BMS} that tries to answer some arbitrary building automation queries Q1, Q2 and Q3.
+
+    \begin{enumerate}
+        \item 
+        Q1 = Which zone is \texttt{Room101} part of i.e., \texttt{Room101} $\xrightarrow{\text{isPartOf}}$ \texttt{?} ?
+
+        \item 
+        Q2 = Which zone does \texttt{HVAC1} serve i.e., \texttt{HVAC1} $\xrightarrow{\text{serves}}$ \texttt{?} ?
+
+        \item 
+        Q3 = Which system controls \texttt{Light1} i.e., \texttt{Light1} $\xrightarrow{\text{controlledBy}}$ \texttt{?} ?
+        
+    \end{enumerate}
+    For each query, the \ac{BMS} makes three guesses with the first one being the one it thinks is most likely correct as shown in \autoref{tab:MRR-example} (the actual correct triple is marked with a \quad \checkmark). \ac{MRR} ranges from 0 to 1, with 1 indicating that all true triples are ranked first while 0 shows that none of the proposed results are correct. The \ac{MRR} for the \ac{BMS} is therefore calculated as $\frac{\frac{1}{3} + \frac{1}{2} + \frac{1}{2}}{3} \approx 0.44$ using \autoref{eq:mrr}
 \begin{table}[]
     \centering
     \begin{tabular}{l|l|c|c}
