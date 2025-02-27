@@ -408,18 +408,52 @@ This section provided a prototypical example for building a \ac{BIM-KG} for trai
 The section develops and formalizes a methodology for applying \ac{KRL} to \acp{BIM-KG} using performance analysis experiments. An overview of the models, datasets, and evaluation protocol used for the experiments is discuused herein.
 
 \subsection{Models}
-Several \ac{KRL} models have been introduced in \autoref{KRL models}, differentiated primarily by their score functions. For this research's experiments, five \ac{KRL} models were chosen: ComplEx, DistMult, RotatE, TransE and TransH. These models are well-regarded baseline techniques from the existing literature, cover a wide range of methodologies, and have been extensively investigated in the context of drug discovery \citep{Paliwal2020PreclinicalGraphs, Zheng2021PharmKG:Mining}, whose data structures closely mirror those of \acp{BIM-KG}.
+Several \ac{KRL} models have been introduced in \autoref{KRL models}, differentiated primarily by their score functions. For this research's experiments, five \ac{KRL} models were chosen: ComplEx, DistMult, RotatE, TransE and TransH. One key motivation for focusing on these baseline models lies in the relatively nascent intersection of \ac{KRL} and \acp{BIM-KG}. While deep learning approaches are undoubtedly state-of-the-art in many other domains, the maturity of KRL applications in the \ac{AEC/FM} field (particularly involving \acp{BIM-KG}) is still in its infancy. Employing advanced neural architectures prematurely risks overshadowing or missing the fundamental considerations vital to establishing a stable methodological foundation. As a result, this research prioritizes a controlled exploration of well-established KRL models—namely ComplEx, DistMult, RotatE, TransE, and TransH—that have proven effective on widely used benchmark datasets in knowledge graph literature. 
 
+Another reason is that these baseline models are easier to interpret and less resource-intensive to implement and tune, making them suitable for a domain that has not yet standardized on key aspects of \ac{KRL} best practices. By demonstrating how these simpler, yet robust approaches perform on \acp{BIM-KG}, this work aims to distill essential insights—such as the impact of data quality, hyperparameter selection, and training procedures—that might otherwise be obscured by the greater complexity and heavier computational requirements of deep neural network models. Once these basic principles are clarified and validated, future research will be better equipped to evaluate whether advanced neural architectures offer a practical advantage for this domain—or whether their additional complexity complicates adoption without providing commensurate gains.
+
+
+
+% These models are well-regarded baseline techniques from the existing literature, cover a wide range of methodologies, and have been extensively investigated in the context of drug discovery \citep{Paliwal2020PreclinicalGraphs, Zheng2021PharmKG:Mining}, whose data structures closely mirror those of \acp{BIM-KG}.  
+In this work, all models consume  triples sampled from the 2 publicly available \acp{BIM-KG} datasets\footnote{\url{https://github.com/BIM-and-Automation-Laboratory/phd-source/tree/main/hpo-study/datasets}} described in \autoref{subsec:experimental_datasets}.
+The internal structure and outputs of each model are discussed below.
 \begin{enumerate}
     \item 
-    \textbf{TransE}: 
-    As discussed in \autoref{translation-based models}, TransE interprets relationships as translations between entities in the embedding space. Its scoring function assesses the plausibility of a triple $(h, r, t)$ by computing the distance between the head entity \(h\), the relationship \(r\), and the tail entity \(t\) in the embedding space, defined mathematically as:
-    
-    \begin{equation}
-        f(h, r, t) = ||h + r - t||_2
+    \textbf{TransE} is one of the earliest and most influential \ac{KRL} models for link prediction. It embeds both entities and relations from a knowledge graph into a low-dimensional vector space, typically $\mathbb{R}^d$, and represents relationships as translation vectors. As illustrated in \autoref{transe-illustration}, the core intuition is that for a triple $(h, r, t)$, where $h$ is the \emph{head} entity, $r$ is the \emph{relation}, and $t$ is the \emph{tail} entity, the embedding of $h$ plus the embedding of $r$ should be close to the embedding of $t$ (\autoref{eq:transE_intuition}):
+
+\begin{equation}
+\label{eq:transE_intuition}
+    \mathbf{h} + \mathbf{r} \approx \mathbf{t}
+\end{equation}
+
+\begin{figure}[t]
+        \centering      \includegraphics[width=0.5\textwidth]{figures/transe_illustration.pdf}
+        \caption{A simple illustration of TransE} \label{transe-illustration}
+\end{figure}
+
+where $\mathbf{h}, \mathbf{t} \in \mathbb{R}^d$ are the entity embeddings, and $\mathbf{r} \in \mathbb{R}^d$ is the relation embedding. During training, each triple is presented along with a negatively corrupted counterpart $(h', r, t')$ (where the head or the tail entity is replaced with a random entity as described in \autoref{subsec:evaluation_protocol}) to teach the model how to distinguish correct (positive) facts from incorrect (negative) ones. TransE initializes a real-valued vector $\mathbf{h} \in \mathbb{R}^d$ for each unique entity $h$ in the BIM-KG. For instance, entities \texttt{RoomA}, \texttt{Temperature}, and \texttt{Door1} each have their own $d$-dimensional embedding, which vectors are updated during training to capture the semantic relationships inherent in the \ac{BIM-KG}. Each relation $r$ (e.g., \texttt{hasProperty}, \texttt{isConnectedTo}) is also represented by a vector $\mathbf{r} \in \mathbb{R}^d$. In the translational framework, relations shift the head embedding vector towards the tail embedding vector, in other words, if you take the embedding of the head entity ($\mathbf{h}$) and add the relation's vector ($\mathbf{r}$) to it, you should end up close to the tail entity's embedding ($\mathbf{t}$). To measure how well a triple $(h, r, t)$ fits the translation criterion, the scoring function below is used: This work adopts the Euclidean distance between between $\mathbf{h} + \mathbf{r}$ and $\mathbf{t}$.
+
+\begin{equation}
+\label{eq:transE_scoring}
+        f(h, r, t) = ||\mathbf{h} + \mathbf{r} - \mathbf{t}||_2
     \end{equation}
-    
-    TransE is efficient and relatively easy to implement, making it a popular choice for many \ac{KRL} tasks. Although it has limitations in dealing with 1-to-N, N-to-1, and N-to-N relations, limiting its ability to capture the complexity and heterogeneity of relationships in \acp{BIM-KG}, its behaviour is investigated nonetheless. Again, the goal of these experiments is not to find the best \ac{KRL} model configuration but to expose and better understand the idiosyncracies arising from integrating different \ac{KRL} models with \acp{BIM-KG}.
+
+A \emph{lower} score indicates a better fit (a more plausible triple). For positive training triples, the objective is to make $f(h, r, t)$ \emph{small}, whereas for negative/corrupted triples, the objective is to push $f(h', r, t')$ \emph{higher}. During training, TransE typically uses a \acf{MRL} to teach the model which triples are correct and which are incorrect. For each true triple $(h,r,t)$ and its corrupted counterpart $(h',r,t')$, the \ac{MRL} is expressed as:
+\begin{equation}
+\mathcal{L} \;=\; \sum_{\substack{(h,r,t) \in \mathcal{P} \\ (h',r,t') \in \mathcal{C}}} \max\Bigl(0,\;\gamma \;+\; f\bigl(h',r,t'\bigr) \;-\; f\bigl(h,r,t\bigr)\Bigr)
+\end{equation}
+
+where:
+\begin{itemize}
+    \item $\mathcal{P}$ is the set of positive (true) triples (sampled from the \ac{BIM-KG}).
+    \item $\mathcal{C}$ is the set of negative (corrupted) triples.
+    \item $f(\cdot)$ is the scoring function defined in \autoref{eq:transE_scoring}.
+    \item $\gamma$ is a margin hyperparameter enforcing separation between positive and negative triples.
+\end{itemize}
+
+After training, each entity and relation in the \ac{BIM-KG} has a learned embedding in $\mathbb{R}^d$. This is typically a \emph{lookup table} of $d$-dimensional vectors for all entities and relations. Together with the scoring function $f(h, r, t)$ in \autoref{eq:transE_scoring}, link prediction tasks can be carried out. For instance, if you have a partial triple \texttt{RoomA} $\xrightarrow{\text{hasProperty}}$ \texttt{?}, TransE can rank all possible tail entities by computing ||\texttt{RoomA} + \texttt{hasProperty} - \texttt{candidate} \in  
+\{\texttt{Temperature}, \texttt{LightLevel}\}|| and choosing the closest match, \texttt{Temperature}.
+Another concrete example in practice is building automation stakeholders using TransE to evaluate the plausibility scores of various hypotheses, potentially aiding in \textit{context-aware decision making}. TransE is computationally efficient and relatively easy to implement, making it a popular choice for many \ac{KRL} tasks. Although it has limitations in dealing with 1-to-N, N-to-1, and N-to-N relations, limiting its ability to capture the complexity and heterogeneity of relationships in \acp{BIM-KG}, its behaviour is investigated nonetheless. Again, the goal of these experiments is not to find the best \ac{KRL} model configuration but to expose and better understand the idiosyncracies arising from integrating different \ac{KRL} models with \acp{BIM-KG}.
 
     % \begin{algorithm}
     % \caption{Learning TransE}
@@ -444,41 +478,145 @@ Several \ac{KRL} models have been introduced in \autoref{KRL models}, differenti
 
 
     \item 
-    \textbf{TransH}: Also discussed in \autoref{translation-based models} is TransH, a variant of TransE that supports heterogeneous relations using relationship-specific hyperplanes to capture the different transformations associated with different relations. The scoring function for TransH is defined as:
-    
-     \begin{equation}
-        f(h, r, t) = ||h_{\perp r} + r - t_{\perp r}||_2
-    \end{equation}
-    
-    where, $h_{\perp r}$ and $t_{\perp r}$ denote the projected representations of the head and tail entities onto the hyperplane associated with the relationship $r$.
-    
+    \textbf{TransH} extends TransE by allowing each relation to define its own hyperplane in the embedding space as shown in \autoref{transh-illustration}. While TransE represents every relation as a single vector \(\mathbf{r}\) in a shared space, TransH introduces two main components for each relation \(r\): a normal vector \(\mathbf{w}_r\) that determines the orientation of its hyperplane, and a translation vector \(\mathbf{d}_r\) that represents how relation \(\mathbf{r}\) translates head entities to tail entities once they are projected onto the hyperplane. This modification addresses the issue of entities participating in multiple, semantically distinct relations (for example, a room that might be adjascent to  another room (via the relation \texttt{isAdjacentTo}) and has a property such as \texttt{Temperature}) (via another relation \texttt{hasProperty}). By projecting entities onto a relation-specific hyperplane, TransH provides a more flexible, context-sensitive representation. Each entity \(h\) or \(t\) is assigned an embedding vector in \(\mathbb{R}^d\) while for each relation \(r\), the model maintains a normal vector \(\mathbf{w}_r\) and a translation vector \(\mathbf{d}_r\). Before applying a translation, TransH projects an entity embedding \(\mathbf{h}\) onto the hyperplane defined by \(\mathbf{w}_r\):
+\begin{equation}
+    \mathbf{h}_\perp = \mathbf{h} \;-\; (\mathbf{w}_r^\top \mathbf{h})\,\mathbf{w}_r,
+\end{equation}
+
+\begin{figure}[t]
+        \centering      \includegraphics[width=0.5\textwidth]{figures/transh_illustration.pdf}
+        \caption{A simple illustration of TransE} \label{transh-illustration}
+\end{figure}
+  
+
+and similarly for the tail embedding \(\mathbf{t}\).
+
+\begin{equation}
+\mathbf{t}_{\perp}
+  \;=\;
+  \mathbf{t}
+  \;-\;
+  \bigl(\mathbf{w}_r^\top \mathbf{t}\bigr)\,\mathbf{w}_r
+\end{equation}
+
+
+The translation itself then takes place in this hyperplane:
+\begin{equation}
+    \mathbf{h}_\perp \;+\; \mathbf{d}_r \;\approx\; \mathbf{t}_\perp.
+\end{equation}
+  
+This design allows different relations to transform entities in relation-specific ways, thus capturing more nuanced contextual behavior than TransE. During training, TransH typically also applies a \ac{MRL} approach similar to TransE. However, in this case the scoring function \(f(h, r, t)\) is the distance between \(\mathbf{h}_\perp + \mathbf{d}_r\) and \(\mathbf{t}_\perp\) (this work adopts the Euclidean distance or \(L_2\) norm),
+
+\begin{equation}
+  f(h, r, t)
+  \;=\;
+  \bigl\|
+  \bigl(
+    \mathbf{h}_{\perp}
+    \;+\;
+    \mathbf{d}_r
+  \bigr)
+  \;-\;
+  \mathbf{t}_{\perp}
+  \bigr\|_2,
+\end{equation}
+A lower value of \(f(h, r, t)\)
+indicates a more plausible triple, since it implies that
+\(\mathbf{h}_{\perp} + \mathbf{d}_r\)
+is geometrically close to
+\(\mathbf{t}_{\perp}\)
+in the embedding space. By the end of training, TransH provides each entity in the \ac{BIM-KG} with a learned embedding, along with a normal vector and translation vector for each relation. These learned parameters enable a variety of link prediction tasks. For example, given \texttt{RoomA} $\xrightarrow{\text{isAdjascentTo}}$ \texttt{?}, the model can project \texttt{RoomA} onto the hyperplane for \texttt{isAdjacentTo}, apply the translation \(\mathbf{d}_{\texttt{isAdjacentTo}}\), and measure distances to all other entity embeddings to identify plausible neighbors. The main advantage of TransH over TransE in a BIM-KG setting is its capacity to handle varied semantics for the same entity depending on which relation it is involved in. Such flexibility is especially valuable if a single entity (such as a specific room or sensor) participates in multiple relationships that do not necessarily share the same geometric properties. However, it should be noted that TransH introduces additional parameters in the form of relation-specific normal vectors, which increases both the model’s expressiveness and its computational overhead. As a result, practitioners must weigh these factors against the potential gains in predictive accuracy and the need to handle more complex relation-specific behavior within \acp{BIM-KG}.
     \item
-    \textbf{RotatE}: RotatE can model various relation patterns, such as symmetry, antisymmetry, inversion, and composition \citep{Sun2019RotatE:Space}. It defines each relation as a rotation from the source entity to the target entity in complex vector space. Given  complex embeddings for the head, relation, and tail entities \(h, r, t \in \mathbb{C}^k\), RotatE enforces that relation embeddings have a modulus of one, i.e., \(|r| = 1\). The scoring function is defined as:
-    
-    \begin{equation}
-    f(h, r, t) = -\| h \odot r - t \|_2
-    \end{equation}
-    
-    where \(\odot\) denotes the Hadamard product.
+    \textbf{RotatE} represents entities and relations using complex-valued embeddings, where each dimension is treated as a point in the complex plane.
+Concretely, for a triple \(\bigl(h, r, t\bigr)\), the head and tail entities \(h\) and \(t\) have embeddings
+\(\mathbf{h}, \mathbf{t} \in \mathbb{C}^d\), while the relation \(r\) is associated with a vector
+\(\mathbf{r} \in \mathbb{C}^d\). As illustrated in \autoref{fig:rotatE-illustration-1}, the key idea is to interpret each relation as a rotation in the complex plane, so that \(\mathbf{t}\) is obtained by rotating \(\mathbf{h}\) according to \(\mathbf{r}\).
+In practice, this is realized via element-wise (Hadamard) multiplication:
+\begin{equation}
+  \mathbf{t} \;\approx\; \mathbf{h} \odot \mathbf{r},
+\end{equation}
+
+\begin{figure}[t]
+    \centering
+    \begin{subfigure}[t]{0.45\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/rotate_illustration_1.pdf}
+        \caption{A simple illustration of RotatE modeling \textbf{r} as a rotation in complex space}
+        \label{fig:rotatE-illustration-1}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[t]{0.45\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/rotate_illustration_2.pdf}
+        \caption{An illustration of RotatE modeling symmetric relations \textbf{r}}
+        \label{fig:rotatE-illustration-2}
+    \end{subfigure}
+    \caption{Simple illustration of RotatE's mechanics}
+    \label{fig:rotatE-illustration}
+\end{figure}
+where every element of \(\mathbf{r}\) is constrained to have absolute value 1. This constraint
+makes \(\mathbf{r}\) a pure phase vector that \emph{rotates} \(\mathbf{h}\) within each dimension
+of \(\mathbb{C}^d\). By formulating relations as rotations, RotatE can naturally capture a variety of relational
+patterns, including symmetry, antisymmetry, and inversion. For instance, a symmetric relation
+like \(\texttt{isAdjacentTo}\) would imply that rotating \(\mathbf{h}\) by \(\mathbf{r}\) to arrive at
+\(\mathbf{t}\) also means rotating \(\mathbf{t}\) by the same \(\mathbf{r}\) recovers \(\mathbf{h}\). This is illustrated in \autoref{fig:rotatE-illustration-2} . An antisymmetric relation would instead prohibit such a bidirectional mapping, as the same rotation
+cannot be applied in reverse without changing the embedding position. In the context of a \ac{BIM-KG}, RotatE’s capacity to capture both symmetrical and asymmetrical relationships is particularly useful for encoding connections such as \(\texttt{isConnectedTo}\),
+\(\texttt{isPartOf}\), or even hierarchical dependencies among building components (e.g., floors,
+rooms, and sensors). Since \acp{BIM-KG} often mix functional, spatial, and compositional relationships, the flexibility offered by complex embeddings can lead to more accurate link predictions. Nonetheless, these potential benefits come at the expense of managing complex-valued vectors and additional hyperparameter tuning.
+
 
     \item
-    \textbf{DistMult}: This model is a simplification of RESCAL \citep{Nickel2013TensorLearning} that restricts relation matrices to be diagonal \citep{Yang2014EmbeddingBases}. This greatly improves the model's computational efficiency but limits the its expressivity to learning only symmetric relations. For context, consider the \texttt{adjacentTo} relation from a hypothetical ontology. Two spaces (e.g., rooms, corridors) might be related by the \texttt{adjacentTo} relation, which is naturally symmetric i.e., if Room A is \texttt{adjacent to} Room B, then Room B is also \texttt{adjacentTo} Room A. Alternatively, antisymmetric relations are unidirectional for example larger spaces often contain smaller ones, but the reverse is not true. The score function used by DistMult to evaluate each triple is;
-    
-    \begin{equation}
-    f(h, r, t) = h^\top \text{diag}(r)t
-    \end{equation}
+    \textbf{DistMult} is a bilinear embedding model that a simplification of RESCAL. In this model, both entities and relations are mapped to vectors
+\(\mathbf{e}_i, \mathbf{r}_j \in \mathbb{R}^d\). Given a triple \(\bigl(h, r, t\bigr)\), DistMult employs
+a scoring function based on element-wise (Hadamard) multiplication:
+\begin{equation}
+    f(h, r, t) 
+  \;=\; 
+  \mathbf{h}^\top 
+  \bigl(\text{diag}\,\mathbf{r}\bigr)
+  \,\mathbf{t}
+  \;=\;
+  \sum_{k=1}^d 
+  h_k \,r_k \,t_k,
+\end{equation}
+  
+
+where \(\mathbf{h}, \mathbf{t}, \mathbf{r}\) are the embeddings for the head entity \(h\), tail entity
+\(t\), and relation \(r\), respectively, and \(\text{diag}\,\mathbf{r}\) denotes a diagonal matrix with
+\(\mathbf{r}\) on its diagonal. Intuitively, DistMult captures relational influence by scaling each
+dimension of \(\mathbf{h}\) by the corresponding dimension in \(\mathbf{r}\), which is then combined
+with \(\mathbf{t}\). A notable property of DistMult is that it is inherently \emph{symmetric} with respect to
+relations. That is, reversing the roles of head and tail does not change the score, since the
+scoring function is commutative. This can be beneficial for knowledge graphs containing
+primarily undirected or bidirectional relationships (such as \(\texttt{isAdjascentTo}\)) , but it becomes a limitation in scenarios
+where antisymmetric or more complex relation patterns such as heirachical relationships (such as \(\texttt{hasProperty}\)) are prevalent. Still, for large-scale
+building data requiring rapid inference, DistMult offers a favorable trade-off between speed
+and performance, especially when combined with optimizations such as negative sampling and regularization. 
 
     \item
-    \textbf{ComplexE}: ComplEx extends DistMult by leveraging complex-valued embeddings for both the entity and relation embeddings, such that a triple \( (h, r, t) \) is represented by a complex vector \( \textbf{h}, \textbf{r}, \textbf{t} \in \mathbb{C}^k \), where \( k \) is the dimensionality of the embedding space \citep{Trouillon2016ComplexPrediction}. The score function for ComplEx is defined as:
+    \textbf{ComplEx} builds upon bilinear approaches such
+as DistMult by allowing entity and relation embeddings to be complex-valued instead of being
+restricted to real numbers. Specifically, each entity and relation \(e, r\) is mapped to a vector
+\(\mathbf{e}, \mathbf{r} \in \mathbb{C}^d\). To score a triple \(\bigl(h, r, t\bigr)\), ComplEx applies
+a bilinear form in the complex domain:
+\[
+  f(h, r, t)
+  \;=\;
+  \mathrm{Re}\Bigl(\bigl\langle \mathbf{h},\, \mathbf{r},\, \overline{\mathbf{t}} \bigr\rangle\Bigr)
+  \;=\;
+  \sum_{k=1}^d
+  \bigl(h_k \;\cdot\; r_k \;\cdot\; \overline{t_k}\bigr),
+\]
+where \(\overline{t_k}\) denotes the complex conjugate of \(t_k\), and \(\mathrm{Re}(\cdot)\) takes
+the real part of the resulting sum. By extending the entity and relation representations into the complex plane, ComplEx can model both symmetric and asymmetric relations, thus overcoming the inherent symmetry limitation of DistMult. For instance, when a relation is symmetric (such as \(\texttt{isAdjacentTo}\)), the imaginary parts of the embeddings cancel out in the scoring function, similarly to DistMult. Conversely,
+when a relation is asymmetric, phase components in the complex embeddings can effectively capture directionality. The flexibility of handing both symmetric and asymmetric relations may lead to improved link prediction performance across a mix of relational patterns. However, as with other complex-valued models
+like RotatE, ComplEx demands careful hyperparameter tuning (embedding dimension,learning rate, regularization) to ensure numerical stability and avoid overfitting. Its additional computational cost compared to real-valued approaches must be weighed against the potential accuracy gains when working with large-scale \ac{BIM-KG} datasets.
 
-    \begin{equation}
-    f(h, r, t) = \text{Re}\left(\sum_{i=1}^{k} h_i \cdot r_i \cdot \overline{t_i}\right)
-    \end{equation}
-    
-    where \( \text{Re}(\cdot) \) denotes the real part of the complex number, and \( \overline{t_i} \) represents the complex conjugate of the \( i \)-th component of the tail entity vector \( t \). By incorporating complex conjugates, ComplEx effectively models asymmetric relations \cite{}.
+
 \end{enumerate}
 
 \subsection{Datasets}
+\label{subsec:experimental_datasets}
 In these experiments, two publicly available \acp{BIM-KG} were used. These datasets are representative examples of how the Brick ontology\footnote{https://brickschema.org/} can be used to model real buildings - Rice Hall at University of Virginia \citep{Balaji2016Brick:Buildings} and Soda Hall at University of Carlifonia, Berkeley \citep{Balaji2016Brick:Buildings}, as detailed in \autoref{BIM-KG-datasets} - \autoref{tab:Soda Hall Facts} and shown in \autoref{fig:buildings_modeled_by_BRICK}. Brick is an open-source initiative aimed at standardizing the semantic descriptions of physical, logical, and virtual assets in buildings and their inter-relationships. An illustrative example of a building modeled using Brick is shown in \autoref{brick-building}. In this example, an \ac{AHU} supplies conditioned air to a \ac{VAV} Box, which adjusts the airflow to an \ac{HVAC} zone that has two rooms. The \ac{HVAC} zone has a thermostat equipped with a temperature and carbon dioxide sensor. Additionally, these two rooms are part of a lighting zone, and the lights in this zone are controlled by the building's lighting controller. The two datasets used in this thesis' experiments closely mirror this example building's setup, but on a larger scale. For an in-depth discussion on the creation and evaluation of these datasets, please refer to \cite{Balaji2016Brick:Buildings} and \cite{Balaji2018BrickApplications}.
 
 \begin{figure}[t]
@@ -575,6 +713,7 @@ Rooms                   & 200+ (small to medium-sized closed offices for faculty
 \end{figure}
 
 \subsection{Evaluation Protocol}
+\label{subsec:evaluation_protocol}
 
 The overarching goal of \ac{KRL} models is to learn entity and relation embeddings that capture the underlying structure and semantics of a knowledge graph. To learn reliable embeddings, a \ac{KRL} model needs to have the ability to distinguish between true facts and false facts in a knowledge graph. In reality, knowledge graphs are curated only with true facts yet both true and false facts are required for successful \ac{KRL} model training. When trained exclusively on true facts, a \ac{KRL} model never encounters invalid examples and thus risks learning a trivial strategy—namely, predicting every possible fact as true. By introducing corruption sets (i.e., negative samples generated by substituting entities in valid triples), the model is encouraged to discriminate between correct and incorrect facts. This process prevents the embeddings from collapsing into a single “\textit{always-true}” mode and enables more robust inference, particularly when dealing with missing or newly introduced facts in a \ac{BIM-KG}.  As mentioned earlier, in the \ac{OWA}, a fact cannot be considered false just because it does not exist in a knowledge graph however, when considering the \ac{LCWA}, a constrained variation of the \ac{CWA}, a knowledge graph is only locally complete i.e., if a fact \texttt{Room\_A} $\xrightarrow{\text{ssn:hasProperty}}$ \texttt{Temperature} is missing from a \ac{BIM-KG}, \ac{LCWA} interprets \texttt{Room A} as not having a Temperature property, but only within the context of this specific \ac{BIM-KG}. With this assumption, a set of negative triples $\mathcal{C}$ can be generated by altering either the head or tail entity of each triple \( (h, r, t) \) in a knowledge graph as shown in \autoref{eq:corruption} below;
 
