@@ -54,34 +54,44 @@ Loss Function & \multicolumn{5}{c|}{Margin Ranking Loss (Margin 1.0)} \\
 The initial series of experiments aims to evaluate the influence of different categorical decisions related to the training configuration of \ac{KRL} models. In particular, this method varies the optimizer (selecting from a choice of Adam \citep{Kingma2014Adam:Optimization}, AdaGrad \citep{DuchiJohn2011AdaptiveOptimization} and \ac{SGD} \citep{Bottou1998OnlineApproximations}), training objective function (selecting from a choice of \ac{BCEL} \citep{Dettmers2017ConvolutionalEmbeddings}, \ac{SPL} \citep{Glorot2011DeepNetworks}, \ac{MRL} \citep{Bordes2013}, and the self-adversarial loss (NSSA) \citep{Sun2019RotatE:Space}), and finally considering the exclusion or inclusion of inverse relationships in the \ac{BIM-KG}s, a process that involves adding a copy of each triple during training but with an inverse relation.
 A summary of the above categorical choices is presented in \autoref{tab:training_setup_choice_matrix}. 
 
-\begin{table}
+\begin{table}[t]
   \centering
-  \caption{Training Setup Choice Matrix}
+  \caption{Training Setup Choice Matrix. Each setup represents one of 120 unique combinations (5 models × 3 optimizers × 4 loss functions × 2 inverse relationship settings), with each trial trained for 500 epochs as specified in \autoref{DEFAULT_PARAMS}.}
   \label{tab:training_setup_choice_matrix}
   \begin{tabular}{|c|c|c|c|}
     \hline
     \textbf{Model} & \textbf{Optimizer} & \textbf{Loss Function} & \textbf{Inverse Relationship} \bigstrut \\ \hline
-    \multirow{18}{*}{All models} & \multirow{6}{*}{Adagrad} & \multirow{2}{*}{Binary Cross Entropy Loss (BCEL)} & False \\ \cline{4-4}
-     &  &  & True \\ \cline{3-4}
-     &  & \multirow{2}{*}{Softplus Loss (SPL)} & False \\ \cline{4-4}
-     &  &  & True \\ \cline{3-4}
-     &  & \multirow{2}{*}{Margin Ranking Loss (MRL)} & False \\ \cline{4-4}
-     &  &  & True \\ \cline{2-4}
-     & \multirow{6}{*}{Adam} & \multirow{2}{*}{Binary Cross Entropy Loss (BCEL) } & False \\ \cline{4-4}
-     &  &  & True \\ \cline{3-4}
-     &  & \multirow{2}{*}{Softplus Loss (SPL)} & False \\ \cline{4-4}
-     &  &  & True \\ \cline{3-4}
-     &  & \multirow{2}{*}{Margin Ranking (MRL)} & False \\ \cline{4-4}
-     &  &  & True \\ \cline{2-4}
-     & \multirow{6}{*}{SGD} & \multirow{2}{*}{Binary Cross Entropy Loss (BCEL)} & False \\ \cline{4-4}
-     &  &  & True \\ \cline{3-4}
-     &  & \multirow{2}{*}{Softplus Loss (SPL)} & False \\ \cline{4-4}
-     &  &  & True \\ \cline{3-4}
-     &  & \multirow{2}{*}{Margin Ranking Loss (MRL)} & False \\ \cline{4-4}
-     &  &  & True \\ \hline
-    % Repeat for other models like DistMult, RotatE, etc.
+    \multirow{20}{*}{All models} 
+    & \multirow{8}{*}{Adagrad} 
+      & \multirow{2}{*}{Binary Cross Entropy Loss (BCEL)} & False \\ \cline{4-4}
+    &   &                                               & True  \\ \cline{3-4}
+    &   & \multirow{2}{*}{Softplus Loss (SPL)}           & False \\ \cline{4-4}
+    &   &                                               & True  \\ \cline{3-4}
+    &   & \multirow{2}{*}{Margin Ranking Loss (MRL)}      & False \\ \cline{4-4}
+    &   &                                               & True  \\ \cline{3-4}
+    &   & \multirow{2}{*}{NSSA Loss}                      & False \\ \cline{4-4}
+    &   &                                               & True  \\ \cline{2-4}
+    & \multirow{8}{*}{Adam} 
+      & \multirow{2}{*}{Binary Cross Entropy Loss (BCEL)} & False \\ \cline{4-4}
+    &   &                                               & True  \\ \cline{3-4}
+    &   & \multirow{2}{*}{Softplus Loss (SPL)}           & False \\ \cline{4-4}
+    &   &                                               & True  \\ \cline{3-4}
+    &   & \multirow{2}{*}{Margin Ranking Loss (MRL)}      & False \\ \cline{4-4}
+    &   &                                               & True  \\ \cline{3-4}
+    &   & \multirow{2}{*}{NSSA Loss}                      & False \\ \cline{4-4}
+    &   &                                               & True  \\ \cline{2-4}
+    & \multirow{8}{*}{SGD} 
+      & \multirow{2}{*}{Binary Cross Entropy Loss (BCEL)} & False \\ \cline{4-4}
+    &   &                                               & True  \\ \cline{3-4}
+    &   & \multirow{2}{*}{Softplus Loss (SPL)}           & False \\ \cline{4-4}
+    &   &                                               & True  \\ \cline{3-4}
+    &   & \multirow{2}{*}{Margin Ranking Loss (MRL)}      & False \\ \cline{4-4}
+    &   &                                               & True  \\ \cline{3-4}
+    &   & \multirow{2}{*}{NSSA Loss}                      & False \\ \cline{4-4}
+    &   &                                               & True  \\ \hline
   \end{tabular}
 \end{table}
+
 
 \begin{figure}[!b]
     \centering
@@ -92,23 +102,23 @@ A summary of the above categorical choices is presented in \autoref{tab:training
     \centering
     \begin{subfigure}[b]{\textwidth}
         \centering
-        \includegraphics[width=1\textwidth]{figures/hits@10_across_all_models_and_optimizers.eps}
-        \caption{Distribution of Hits@10 scores across all models and optimizers.}
+        \includegraphics[width=0.96\textwidth]{figures/hits@10_across_all_models_and_optimizers.eps}
+        \caption{Effects of optimizers on Hits@10 scores (aggregated across all models, loss functions and inverse relationship settings).}
         \label{subfig:hits@10_across_all_models_and_optimizers}
     \end{subfigure}
     
     \begin{subfigure}[b]{\textwidth}
         \centering
-        \includegraphics[width=1\textwidth]{figures/hits@10_across_all_models_and_loss_functions.eps}
-        \caption{Distribution of Hits@10 scores across all models and loss functions.}
+        \includegraphics[width=0.96\textwidth]{figures/hits@10_across_all_models_and_loss_functions.eps}
+        \caption{Effects of loss functions on Hits@10 scores (aggregated across all models, optimizers, and inverse realtionship settings).}
         \label{subfig:hits@10_across_all_models_and_loss_functions}
     \end{subfigure}
     
     \begin{subfigure}[b]{\textwidth}
         \centering
-        \includegraphics[width=1\textwidth]{figures/hits@10_across_all_models_with_inverse_relations_present_or_absent.eps}
-        \caption{Distribution of Hits@10 scores across all models with inverse relations present or absent.}
-        \label{subfig:hits@10_across_all_models_with_inverse_relations_present_or_absent}
+        \includegraphics[width=0.96\textwidth]{figures/hits@10_across_all_models_with_inverse_relations_present_or_absent.eps}
+        \caption{Effects of having or not having inverse relationships on Hits@10 scores (aggregated across all models, optimizers, loss functions).}
+\label{subfig:hits@10_across_all_models_with_inverse_relations_present_or_absent}
     \end{subfigure}
     
     \caption{The effect of different training setup choices across all models and both datasets.}
@@ -128,14 +138,14 @@ Looking at \autoref{subfig:hits@10_across_all_models_and_loss_functions} reveals
     \begin{subfigure}[b]{\textwidth}
         \centering
         \includegraphics[width=1\textwidth]{figures/hpo_total_runtime.eps}
-        \caption{Total \ac{HPO} runtimes for all models}
+        \caption{Total \ac{HPO} runtimes}
         \label{subfig:hpo_total_runtime}
     \end{subfigure}
     
     \begin{subfigure}[b]{\textwidth}
         \centering
         \includegraphics[width=1\textwidth]{figures/hpo_best_trial_number.eps}
-        \caption{Best \ac{HPO} trial number for all models}
+        \caption{Best \ac{HPO} trial number}
         \label{subfig:hpo_best_trial_number}
     \end{subfigure}
     
@@ -147,22 +157,22 @@ Looking at \autoref{subfig:hits@10_across_all_models_and_loss_functions} reveals
     \centering
     \begin{subfigure}[b]{\textwidth}
         \centering
-        \includegraphics[width=1\textwidth]{figures/hpo_best_trial_AMR.eps}
+        \includegraphics[width=0.97\textwidth]{figures/hpo_best_trial_AMR.eps}
         \caption{Best \ac{HPO} trial \ac{AMR}}
         \label{subfig:hpo_best_trial_AMR}
     \end{subfigure}
     
     \begin{subfigure}[b]{\textwidth}
         \centering
-        \includegraphics[width=1\textwidth]{figures/hpo_best_trial_hits@10.eps}
+        \includegraphics[width=0.97\textwidth]{figures/hpo_best_trial_hits@10.eps}
         \caption{Best \ac{HPO} trial Hits@10}
         \label{subfig:hpo_best_trial_hits@10}
     \end{subfigure}
     
     \begin{subfigure}[b]{\textwidth}
         \centering
-        \includegraphics[width=1\textwidth]{figures/hpo_summary_overall_hits@10.eps}
-        \caption{Distribution of Hits@10 Scores Across all HPO runs of all models}
+        \includegraphics[width=0.97\textwidth]{figures/hpo_summary_overall_hits@10.eps}
+        \caption{Distribution of Hits@10 Scores Across all 100 HPO runs using the training setup in \autoref{DEFAULT_PARAMS}, and hyperparameter optimization search ranges in \autoref{tab:hpo_search_range})}
         \label{subfig:hpo_summary}
     \end{subfigure}
     
@@ -170,7 +180,7 @@ Looking at \autoref{subfig:hits@10_across_all_models_and_loss_functions} reveals
     \label{fig:effect_of_2_different_HPO_strategies_part2}
 \end{figure}
 
-\begin{table}[t]
+\begin{table}[b]
     \centering
     \begin{tabular}{ll}
     \hline \hline \textbf{Parameter} & \textbf{Value range} \bigstrut \\
@@ -192,12 +202,6 @@ Because \ac{KRL} is an infant technique in the \ac{AEC/FM} field, formulating a 
 \begin{enumerate}
     \item 
     Summarizing the technical aspects and key considerations for building, evaluating and validating \acp{BIM-KG} for downstream \ac{KRL} pipelines.
-
-    \begin{figure}[h]
-    \centering
-    \includegraphics[width=1\textwidth]{figures/lbd_for_krl.pdf}
-    \caption{Summarized framework for building, evaluating and validating \acp{BIM-KG} for downstream \ac{KRL} pipelines}\label{SSN_OPM_SEAS}
-\end{figure}
 
     \item 
     Using the deductions from the performance analysis experiments to define the prerequisites for integrating \ac{KRL} with \acp{BIM-KG} in a domain-independent framework.   
